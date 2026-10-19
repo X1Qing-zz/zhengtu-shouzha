@@ -14,6 +14,7 @@ import '../../widgets/common.dart';
 import '../../widgets/compass_mark.dart';
 import '../../widgets/weather_glyph.dart';
 import '../diary/diary_editor.dart';
+import '../launch/launch_targets.dart';
 import '../ledger/expense_editor.dart';
 import '../settings/settings_page.dart';
 import '../tasks/task_editor.dart';
@@ -382,7 +383,13 @@ class _HomeHeader extends StatelessWidget {
               children: [
         Row(
           children: [
-            CompassMark(size: 20, color: c.inkSoft, accent: c.accent, stroke: 3),
+            CompassMark(
+              key: LaunchTargets.homeCompass,
+              size: 20,
+              color: c.inkSoft,
+              accent: c.accent,
+              stroke: 3,
+            ),
             const SizedBox(width: 9),
             Text('征途手札', style: AppText.eyebrow(color: c.inkSoft, size: 9.5)),
             const Spacer(),
