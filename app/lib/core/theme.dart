@@ -89,20 +89,20 @@ class AppColors extends ThemeExtension<AppColors> {
 
   /// Spring: tender green + pink.
   static final AppColors springLight = light.copyWith(
-    bg: const Color(0xFFF7F4EC),
-    surface: const Color(0xFFFFFCF7),
+    bg: const Color(0xFFFAF6F1),
+    surface: const Color(0xFFFFFBF8),
     raised: const Color(0xFFFFFFFF),
-    sunken: const Color(0xFFEBE7DC),
+    sunken: const Color(0xFFF1E7E9),
     ink: const Color(0xFF292A24),
     inkSoft: const Color(0xFF505247),
     muted: const Color(0xFF8A8C7D),
-    line: const Color(0xFFE2DFD2),
+    line: const Color(0xFFEADBDD),
     accent: const Color(0xFF63825A),
     accentSoft: const Color(0xFFE6EFDE),
     moss: const Color(0xFF5F7F52),
     mossSoft: const Color(0xFFE2ECDC),
-    terra: const Color(0xFFAD6378),
-    terraSoft: const Color(0xFFF3E1E7),
+    terra: const Color(0xFFC45F7C),
+    terraSoft: const Color(0xFFF7DCE6),
     gold: const Color(0xFFC7A65A),
     sky: const Color(0xFF8DA9A2),
     shadow: const Color(0xFF5D584A),
@@ -121,7 +121,7 @@ class AppColors extends ThemeExtension<AppColors> {
     accentSoft: const Color(0xFF2A3524),
     moss: const Color(0xFF9DBA8E),
     mossSoft: const Color(0xFF273324),
-    terra: const Color(0xFFE0A3B2),
+    terra: const Color(0xFFE98FA9),
     terraSoft: const Color(0xFF3A252B),
     gold: const Color(0xFFD9BC7A),
     sky: const Color(0xFF9DBBB0),
@@ -129,18 +129,18 @@ class AppColors extends ThemeExtension<AppColors> {
 
   /// Summer: vivid green + blue.
   static final AppColors summerLight = light.copyWith(
-    bg: const Color(0xFFF4F1E5),
-    surface: const Color(0xFFFCFAF2),
+    bg: const Color(0xFFF3F7E9),
+    surface: const Color(0xFFFBFDF6),
     raised: const Color(0xFFFFFFFF),
-    sunken: const Color(0xFFE8E6D9),
+    sunken: const Color(0xFFE5EDDC),
     ink: const Color(0xFF1F2A24),
     inkSoft: const Color(0xFF46564C),
     muted: const Color(0xFF7D8A80),
-    line: const Color(0xFFD8E0D6),
-    accent: const Color(0xFF3E7D5A),
-    accentSoft: const Color(0xFFDDEDE1),
-    moss: const Color(0xFF2F6D4B),
-    mossSoft: const Color(0xFFD9EBDD),
+    line: const Color(0xFFD4E1D2),
+    accent: const Color(0xFF2E7D4F),
+    accentSoft: const Color(0xFFD8ECDD),
+    moss: const Color(0xFF236B48),
+    mossSoft: const Color(0xFFD4E9D9),
     terra: const Color(0xFFC26A4A),
     terraSoft: const Color(0xFFF3DFD7),
     gold: const Color(0xFFC7A64A),
@@ -157,9 +157,9 @@ class AppColors extends ThemeExtension<AppColors> {
     inkSoft: const Color(0xFFC9D7CC),
     muted: const Color(0xFF8EA194),
     line: const Color(0xFF2A3A30),
-    accent: const Color(0xFF7FC49A),
+    accent: const Color(0xFF86D09C),
     accentSoft: const Color(0xFF20382A),
-    moss: const Color(0xFF8FD3AA),
+    moss: const Color(0xFF9ADBAF),
     mossSoft: const Color(0xFF1D3326),
     terra: const Color(0xFFE09A78),
     terraSoft: const Color(0xFF38251F),
@@ -167,28 +167,64 @@ class AppColors extends ThemeExtension<AppColors> {
     sky: const Color(0xFF7FB6D4),
   );
 
-  /// Autumn: gold + orange-red. The original warm-paper palette.
-  static const AppColors autumnLight = light;
-  static const AppColors autumnDark = dark;
+  /// Autumn: gold + orange-red, distinct from the old warm-paper copper.
+  static final AppColors autumnLight = light.copyWith(
+    bg: const Color(0xFFFFF3CE),
+    surface: const Color(0xFFFFF9DF),
+    raised: const Color(0xFFFFFCF0),
+    sunken: const Color(0xFFF3E0B2),
+    ink: const Color(0xFF2C2415),
+    inkSoft: const Color(0xFF59492E),
+    muted: const Color(0xFF8F7A54),
+    line: const Color(0xFFEBD29C),
+    accent: const Color(0xFFC28A10),
+    accentSoft: const Color(0xFFF8E2A8),
+    moss: const Color(0xFF7A7D35),
+    mossSoft: const Color(0xFFECEBCB),
+    terra: const Color(0xFFD2622C),
+    terraSoft: const Color(0xFFF8D8C2),
+    gold: const Color(0xFFE2A916),
+    sky: const Color(0xFF8F9A72),
+    shadow: const Color(0xFF6B4B1C),
+  );
+
+  static final AppColors autumnDark = dark.copyWith(
+    bg: const Color(0xFF171208),
+    surface: const Color(0xFF21190D),
+    raised: const Color(0xFF2B2111),
+    sunken: const Color(0xFF100B05),
+    ink: const Color(0xFFF8EBCF),
+    inkSoft: const Color(0xFFDCC7A2),
+    muted: const Color(0xFFA28A62),
+    line: const Color(0xFF3B2C18),
+    accent: const Color(0xFFEDB84C),
+    accentSoft: const Color(0xFF3A2B12),
+    moss: const Color(0xFFB3B36A),
+    mossSoft: const Color(0xFF2F2F1A),
+    terra: const Color(0xFFEA7C4B),
+    terraSoft: const Color(0xFF3F2416),
+    gold: const Color(0xFFF6CC63),
+    sky: const Color(0xFFB5A074),
+  );
 
   /// Winter: snow white + grey-blue.
   static final AppColors winterLight = light.copyWith(
-    bg: const Color(0xFFF3F6F8),
-    surface: const Color(0xFFFCFDFE),
+    bg: const Color(0xFFF8FBFD),
+    surface: const Color(0xFFFEFFFF),
     raised: const Color(0xFFFFFFFF),
-    sunken: const Color(0xFFE7EDF2),
+    sunken: const Color(0xFFEEF4F8),
     ink: const Color(0xFF24303A),
     inkSoft: const Color(0xFF4B5B68),
     muted: const Color(0xFF8494A1),
-    line: const Color(0xFFD7E1E8),
-    accent: const Color(0xFF5E8098),
-    accentSoft: const Color(0xFFE3EDF4),
+    line: const Color(0xFFE3EDF3),
+    accent: const Color(0xFF6B8DA5),
+    accentSoft: const Color(0xFFEDF4F9),
     moss: const Color(0xFF6E8B7A),
     mossSoft: const Color(0xFFE2ECE6),
     terra: const Color(0xFFB56A5E),
     terraSoft: const Color(0xFFF3E2DF),
     gold: const Color(0xFFB08A4E),
-    sky: const Color(0xFF7FA6C0),
+    sky: const Color(0xFF8FB6CE),
     shadow: const Color(0xFF4B5C6B),
   );
 
@@ -299,6 +335,7 @@ extension AppThemeContext on BuildContext {
   AppColors get colors => Theme.of(this).extension<AppColors>() ?? AppColors.light;
   TextTheme get texts => Theme.of(this).textTheme;
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
+  Season get season => Season.of(DateTime.now());
   Color get bg => colors.bg;
   Color get surface => colors.surface;
   Color get ink => colors.ink;

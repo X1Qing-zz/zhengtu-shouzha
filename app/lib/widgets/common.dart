@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../core/season_visuals.dart';
 import '../core/theme.dart';
 
 class PaperCard extends StatelessWidget {
@@ -9,6 +10,7 @@ class PaperCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(20),
     this.onTap,
     this.color,
+    this.gradient,
     this.borderColor,
     this.radius = 22,
     this.elevated = true,
@@ -18,6 +20,7 @@ class PaperCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final VoidCallback? onTap;
   final Color? color;
+  final Gradient? gradient;
   final Color? borderColor;
   final double radius;
   final bool elevated;
@@ -41,7 +44,7 @@ class PaperCard extends StatelessWidget {
             : null,
       ),
       child: Material(
-        color: color ?? c.surface,
+        color: gradient == null ? (color ?? c.surface) : Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: shape,
           side: BorderSide(
@@ -50,11 +53,14 @@ class PaperCard extends StatelessWidget {
           ),
         ),
         clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          splashColor: c.accent.withValues(alpha: 0.06),
-          highlightColor: c.accent.withValues(alpha: 0.03),
-          child: Padding(padding: padding, child: child),
+        child: Ink(
+          decoration: BoxDecoration(borderRadius: shape, gradient: gradient),
+          child: InkWell(
+            onTap: onTap,
+            splashColor: c.accent.withValues(alpha: 0.06),
+            highlightColor: c.accent.withValues(alpha: 0.03),
+            child: Padding(padding: padding, child: child),
+          ),
         ),
       ),
     );
@@ -71,13 +77,14 @@ class Eyebrow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final tone = color ?? SeasonVisuals.secondary(context.season, c);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 14,
           height: 1,
-          color: (color ?? c.accent).withValues(alpha: 0.7),
+          color: tone.withValues(alpha: 0.75),
         ),
         const SizedBox(width: 7),
         Text(
@@ -137,12 +144,22 @@ class SectionHeading extends StatelessWidget {
           else if (actionLabel != null)
             TextButton(
               onPressed: onAction,
+              style: TextButton.styleFrom(
+                foregroundColor: c.ink,
+                backgroundColor: c.accentSoft.withValues(alpha: c.isDark ? 0.55 : 0.72),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                minimumSize: const Size(0, 30),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                shape: StadiumBorder(
+                  side: BorderSide(color: c.accent.withValues(alpha: 0.22), width: 0.7),
+                ),
+              ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(actionLabel!),
+                  Text(actionLabel!, style: AppText.sans(size: 10.5, weight: FontWeight.w600, color: c.ink)),
                   const SizedBox(width: 2),
-                  const Icon(Icons.arrow_forward_rounded, size: 14),
+                  const Icon(Icons.arrow_forward_rounded, size: 13),
                 ],
               ),
             ),
@@ -504,7 +521,8 @@ class PillSelector extends StatelessWidget {
       child: Row(
         children: List.generate(options.length, (i) {
           final active = i == selected;
-          final activeColor = activeColors != null && i < activeColors!.length ? activeColors![i] : c.ink;
+          final hasCustomColor = activeColors != null && i < activeColors!.length;
+          final activeColor = hasCustomColor ? activeColors![i] : c.accentSoft;
           return Expanded(
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
@@ -517,6 +535,9 @@ class PillSelector extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: active ? activeColor : Colors.transparent,
                   borderRadius: BorderRadius.circular(dense ? 9 : 11),
+                  border: active
+                      ? Border.all(color: c.accent.withValues(alpha: 0.24), width: 0.8)
+                      : null,
                   boxShadow: active
                       ? [
                           BoxShadow(
@@ -532,7 +553,7 @@ class PillSelector extends StatelessWidget {
                   style: AppText.sans(
                     size: dense ? 11.5 : 12.5,
                     weight: active ? FontWeight.w600 : FontWeight.w500,
-                    color: active ? c.bg : c.muted,
+                    color: active ? (hasCustomColor ? c.bg : c.ink) : c.muted,
                     letterSpacing: 0.2,
                   ),
                 ),

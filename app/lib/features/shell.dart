@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../state/app_store.dart';
 import '../widgets/nav_bar.dart';
+import '../widgets/season_backdrop.dart';
 import 'calendar/calendar_page.dart';
 import 'diary/diary_page.dart';
 import 'home/home_page.dart';
@@ -49,16 +50,22 @@ class _RootShellState extends State<RootShell> {
     context.watch<AppStore>();
     return Scaffold(
       extendBody: true,
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        physics: const BouncingScrollPhysics(),
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          _KeepAlivePage(child: HomePage(onNavigate: _select)),
-          const _KeepAlivePage(child: TasksPage()),
-          const _KeepAlivePage(child: DiaryPage()),
-          const _KeepAlivePage(child: LedgerPage()),
-          const _KeepAlivePage(child: CalendarPage()),
+          const SeasonBackdrop(),
+          PageView(
+            controller: _pageController,
+            onPageChanged: _onPageChanged,
+            physics: const BouncingScrollPhysics(),
+            children: [
+              _KeepAlivePage(child: HomePage(onNavigate: _select)),
+              const _KeepAlivePage(child: TasksPage()),
+              const _KeepAlivePage(child: DiaryPage()),
+              const _KeepAlivePage(child: LedgerPage()),
+              const _KeepAlivePage(child: CalendarPage()),
+            ],
+          ),
         ],
       ),
       bottomNavigationBar: AppNavBar(index: _index, onTap: _select),

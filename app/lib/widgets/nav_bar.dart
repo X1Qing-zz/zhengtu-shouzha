@@ -2,6 +2,7 @@ import 'dart:ui';
 
 import 'package:flutter/material.dart';
 
+import '../core/season_visuals.dart';
 import '../core/theme.dart';
 
 class NavDestination {
@@ -33,6 +34,7 @@ class AppNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final secondary = SeasonVisuals.secondary(context.season, c);
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 0, 14, 10),
       child: ClipRRect(
@@ -70,10 +72,24 @@ class AppNavBar extends StatelessWidget {
                         curve: Curves.easeOutCubic,
                         padding: const EdgeInsets.symmetric(vertical: 7),
                         decoration: BoxDecoration(
-                          color: active
-                              ? c.accentSoft.withValues(alpha: c.isDark ? 0.55 : 0.8)
-                              : Colors.transparent,
+                          gradient: active
+                              ? LinearGradient(
+                                  begin: Alignment.topLeft,
+                                  end: Alignment.bottomRight,
+                                  colors: [
+                                    c.accent.withValues(alpha: c.isDark ? 0.26 : 0.22),
+                                    secondary.withValues(alpha: c.isDark ? 0.20 : 0.18),
+                                  ],
+                                )
+                              : null,
+                          color: active ? null : Colors.transparent,
                           borderRadius: BorderRadius.circular(17),
+                          border: Border.all(
+                            color: active
+                                ? c.accent.withValues(alpha: 0.22)
+                                : Colors.transparent,
+                            width: 0.8,
+                          ),
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -84,7 +100,7 @@ class AppNavBar extends StatelessWidget {
                               child: Icon(
                                 active ? destination.activeIcon : destination.icon,
                                 size: 21,
-                                color: active ? c.accent : c.muted,
+                                color: active ? secondary : c.muted,
                               ),
                             ),
                             const SizedBox(height: 3),

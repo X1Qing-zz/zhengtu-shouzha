@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/date_utils.dart';
+import '../../core/season.dart';
+import '../../core/season_visuals.dart';
 import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../../state/app_store.dart';
 import '../../widgets/common.dart';
+import '../../widgets/season_backdrop.dart';
 import '../../widgets/weather_glyph.dart';
 
 class WeatherPage extends StatelessWidget {
@@ -16,21 +19,24 @@ class WeatherPage extends StatelessWidget {
     final store = context.watch<AppStore>();
     final c = context.colors;
     final weather = store.weather;
-    final kind = weather?.kind ?? WeatherKind.partly;
-    final colors = WeatherVisuals.gradient(
-      kind,
-      dark: c.isDark,
+    final season = Season.of(DateTime.now());
+    final colors = SeasonVisuals.weather(
+      season,
+      c,
       isDay: weather?.isDay ?? true,
     );
-    final ink = WeatherVisuals.ink(kind, dark: c.isDark, isDay: weather?.isDay ?? true);
-    final soft = WeatherVisuals.softInk(kind, dark: c.isDark, isDay: weather?.isDay ?? true);
+    final ink = SeasonVisuals.weatherInk(colors, c);
+    final soft = ink.withValues(alpha: 0.78);
 
     return Scaffold(
-      backgroundColor: c.bg,
-      body: ListView(
-        padding: EdgeInsets.zero,
-        physics: const BouncingScrollPhysics(),
+      backgroundColor: Colors.transparent,
+      body: Stack(
         children: [
+          const Positioned.fill(child: SeasonBackdrop()),
+          ListView(
+            padding: EdgeInsets.zero,
+            physics: const BouncingScrollPhysics(),
+            children: [
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -286,6 +292,8 @@ class WeatherPage extends StatelessWidget {
           ),
         ],
       ),
+    ],
+  ),
     );
   }
 
