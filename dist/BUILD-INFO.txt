@@ -20,8 +20,8 @@ SHA256：91EBBB9CA0EA296FDE8C9354CD60A4743D51B7E83847FB1EA9F6D6852C00B519
 发布状态
 --------
 - 本地已 commit + tag `v0.5.2`。
-- GitHub 仍是 v0.4.0；推送待完成（需要更新 `Github.md` 里的 GitHub token）。
-- 更新 token 后通过 Git Data API 上传最新提交，并发布 v0.5.2 Release。
+- GitHub v0.5.2 已发布，Release 资产 `zhengtu-shouzha-v0.5.2.apk`。
+- 发布方式：Git Data API 上传最新提交，再创建 tag / Release。
 
 环境
 ----
