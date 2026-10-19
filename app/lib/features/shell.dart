@@ -19,8 +19,26 @@ class RootShell extends StatefulWidget {
 
 class _RootShellState extends State<RootShell> {
   int _index = 0;
+  late final PageController _pageController = PageController();
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
 
   void _select(int index) {
+    if (index == _index) return;
+    HapticFeedback.selectionClick();
+    setState(() => _index = index);
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 320),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _onPageChanged(int index) {
     if (index == _index) return;
     HapticFeedback.selectionClick();
     setState(() => _index = index);
@@ -31,17 +49,40 @@ class _RootShellState extends State<RootShell> {
     context.watch<AppStore>();
     return Scaffold(
       extendBody: true,
-      body: IndexedStack(
-        index: _index,
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        physics: const BouncingScrollPhysics(),
         children: [
-          HomePage(onNavigate: _select),
-          const CalendarPage(),
-          const DiaryPage(),
-          const TasksPage(),
-          const LedgerPage(),
+          _KeepAlivePage(child: HomePage(onNavigate: _select)),
+          const _KeepAlivePage(child: TasksPage()),
+          const _KeepAlivePage(child: DiaryPage()),
+          const _KeepAlivePage(child: LedgerPage()),
+          const _KeepAlivePage(child: CalendarPage()),
         ],
       ),
       bottomNavigationBar: AppNavBar(index: _index, onTap: _select),
     );
+  }
+}
+
+class _KeepAlivePage extends StatefulWidget {
+  const _KeepAlivePage({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_KeepAlivePage> createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<_KeepAlivePage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    return widget.child;
   }
 }

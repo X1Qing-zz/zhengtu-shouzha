@@ -4,8 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme.dart';
-import 'features/onboarding.dart';
-import 'features/shell.dart';
+import 'features/launch/launch_gate.dart';
 import 'state/app_store.dart';
 
 class ZhengtuApp extends StatelessWidget {
@@ -14,11 +13,12 @@ class ZhengtuApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final store = context.watch<AppStore>();
+    final now = DateTime.now();
     return MaterialApp(
       title: '征途手札',
       debugShowCheckedModeBanner: false,
-      theme: buildTheme(Brightness.light),
-      darkTheme: buildTheme(Brightness.dark),
+      theme: buildTheme(Brightness.light, now: now),
+      darkTheme: buildTheme(Brightness.dark, now: now),
       themeMode: store.themeMode,
       locale: const Locale('zh', 'CN'),
       supportedLocales: const [Locale('zh', 'CN'), Locale('en')],
@@ -42,7 +42,7 @@ class ZhengtuApp extends StatelessWidget {
           child: child ?? const SizedBox.shrink(),
         );
       },
-      home: store.onboarded ? const RootShell() : const OnboardingPage(),
+      home: const LaunchGate(),
     );
   }
 }

@@ -14,10 +14,10 @@ class NavDestination {
 
 const List<NavDestination> kNavDestinations = [
   NavDestination(Icons.wb_twilight_outlined, Icons.wb_twilight_rounded, '今日'),
-  NavDestination(Icons.calendar_month_outlined, Icons.calendar_month_rounded, '日历'),
-  NavDestination(Icons.auto_stories_outlined, Icons.auto_stories_rounded, '手札'),
   NavDestination(Icons.checklist_outlined, Icons.checklist_rounded, '任务'),
+  NavDestination(Icons.auto_stories_outlined, Icons.auto_stories_rounded, '手札'),
   NavDestination(Icons.account_balance_wallet_outlined, Icons.account_balance_wallet_rounded, '账本'),
+  NavDestination(Icons.calendar_month_outlined, Icons.calendar_month_rounded, '日历'),
 ];
 
 class AppNavBar extends StatelessWidget {

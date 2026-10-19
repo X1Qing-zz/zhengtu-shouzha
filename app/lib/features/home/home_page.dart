@@ -8,7 +8,6 @@ import '../../core/formatters.dart';
 import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../../state/app_store.dart';
-import '../../widgets/charts.dart';
 import '../../widgets/common.dart';
 import '../../widgets/compass_mark.dart';
 import '../../widgets/weather_glyph.dart';
@@ -48,11 +47,14 @@ class HomePage extends StatelessWidget {
                 name: store.name,
                 now: now,
                 streak: store.diaryStreakCount,
+                quote: store.quote,
+                onNextQuote: store.nextQuote,
+                onAddMessage: () => _addFutureMessage(context, store),
                 onSettings: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const SettingsPage()),
                 ),
               ),
-              const SizedBox(height: 22),
+              const SizedBox(height: 18),
               WeatherCard(
                 weather: store.weather,
                 loading: store.weatherLoading,
@@ -62,28 +64,12 @@ class HomePage extends StatelessWidget {
                 ),
                 onRetry: () => store.loadWeather(force: true),
               ),
-              const SizedBox(height: 16),
-              _QuoteCard(
-                quote: store.quote,
-                onNext: store.nextQuote,
-              ),
-              const SizedBox(height: 22),
-              _StatsStrip(store: store),
-              const SizedBox(height: 14),
-              _WeeklyEntry(
-                taskDone: store.weekDoneCount,
-                diaries: store.weekDiaryCount,
-                expenses: store.weekExpenseTotal,
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const WeeklyReviewPage()),
-                ),
-              ),
               const SizedBox(height: 26),
               SectionHeading(
                 eyebrow: 'TODAY · QUESTS',
                 title: '今日任务',
                 actionLabel: '全部',
-                onAction: () => onNavigate(3),
+                onAction: () => onNavigate(1),
               ),
               const SizedBox(height: 12),
               if (todayTasks.isEmpty)
@@ -106,7 +92,7 @@ class HomePage extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8, top: 4),
                           child: TextButton(
-                            onPressed: () => onNavigate(3),
+                            onPressed: () => onNavigate(1),
                             child: Text('还有 ${todayTasks.length - 4} 条任务'),
                           ),
                         ),
@@ -130,7 +116,7 @@ class HomePage extends StatelessWidget {
                 eyebrow: 'EXPENSES',
                 title: '今日开销',
                 actionLabel: '账本',
-                onAction: () => onNavigate(4),
+                onAction: () => onNavigate(3),
               ),
               const SizedBox(height: 12),
               _ExpenseCard(
@@ -138,38 +124,17 @@ class HomePage extends StatelessWidget {
                 count: store.expensesOn(now).length,
                 monthTotal: store.monthExpenseTotal(now),
                 series: store.dailyExpenseTotals(now, 7),
-                onTap: () => onNavigate(4),
+                onTap: () => onNavigate(3),
                 onAdd: () => showExpenseEditor(context),
               ),
               const SizedBox(height: 26),
-              SectionHeading(eyebrow: 'QUICK START', title: '随手一笔'),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _QuickAction(
-                      icon: Icons.edit_note_rounded,
-                      label: '写手札',
-                      onTap: () => _openDiary(context, diary),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _QuickAction(
-                      icon: Icons.add_card_rounded,
-                      label: '记一笔',
-                      onTap: () => showExpenseEditor(context),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: _QuickAction(
-                      icon: Icons.check_circle_outline_rounded,
-                      label: '加任务',
-                      onTap: () => showTaskEditor(context),
-                    ),
-                  ),
-                ],
+              _WeeklyEntry(
+                taskDone: store.weekDoneCount,
+                diaries: store.weekDiaryCount,
+                expenses: store.weekExpenseTotal,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const WeeklyReviewPage()),
+                ),
               ),
               const SizedBox(height: 34),
               Center(
@@ -219,6 +184,113 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
+
+  Future<void> _addFutureMessage(BuildContext context, AppStore store) async {
+    final text = await showAppSheet<String>(
+      context,
+      const _FutureMessageSheet(),
+    );
+    if (text == null || text.trim().isEmpty || !context.mounted) return;
+    await store.addFutureMessage(text);
+    if (!context.mounted) return;
+    showAppSnack(context, '写好了，未来的你会随机读到它');
+  }
+}
+
+class _FutureMessageSheet extends StatefulWidget {
+  const _FutureMessageSheet();
+
+  @override
+  State<_FutureMessageSheet> createState() => _FutureMessageSheetState();
+}
+
+class _FutureMessageSheetState extends State<_FutureMessageSheet> {
+  final TextEditingController _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 18),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: c.line.withValues(alpha: 0.7)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(color: c.accentSoft, shape: BoxShape.circle),
+                child: Icon(Icons.mail_outline_rounded, size: 17, color: c.accent),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text('给未来的自己', style: AppText.serifStyle(size: 20, color: c.ink)),
+              ),
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(Icons.close_rounded, size: 18, color: c.muted),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '把此刻想说的话放进谏言池，未来的某一天它会随机出现。',
+            style: AppText.sans(size: 11.5, color: c.muted, height: 1.7),
+          ),
+          const SizedBox(height: 16),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            minLines: 3,
+            maxLines: 5,
+            maxLength: 200,
+            textInputAction: TextInputAction.newline,
+            style: AppText.serifStyle(size: 15, color: c.ink, height: 1.7, weight: FontWeight.w400),
+            decoration: InputDecoration(
+              hintText: '比如：别怕，你已经在路上了。',
+              hintStyle: AppText.serifStyle(
+                size: 14,
+                color: c.muted,
+                height: 1.6,
+                weight: FontWeight.w400,
+              ),
+              counterStyle: AppText.sans(size: 9, color: c.muted),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: () {
+                final value = _controller.text.trim();
+                if (value.isEmpty) return;
+                Navigator.pop(context, value);
+              },
+              child: const Text('收进手札'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _HomeHeader extends StatelessWidget {
@@ -226,12 +298,18 @@ class _HomeHeader extends StatelessWidget {
     required this.name,
     required this.now,
     required this.streak,
+    required this.quote,
+    required this.onNextQuote,
+    required this.onAddMessage,
     required this.onSettings,
   });
 
   final String name;
   final DateTime now;
   final int streak;
+  final Quote quote;
+  final VoidCallback onNextQuote;
+  final VoidCallback onAddMessage;
   final VoidCallback onSettings;
 
   @override
@@ -274,9 +352,91 @@ class _HomeHeader extends StatelessWidget {
         const SizedBox(height: 9),
         Text(
           greetingFor(now, name),
-          style: AppText.serifStyle(size: 30, color: c.ink, height: 1.25, letterSpacing: 1.2),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: AppText.serifStyle(size: 29, color: c.ink, height: 1.28, letterSpacing: 1.1),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 14),
+        Container(
+          padding: const EdgeInsets.only(left: 14),
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: c.accent.withValues(alpha: 0.55), width: 1.6),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '“${quote.text}”',
+                maxLines: 4,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.serifStyle(
+                  size: 15.5,
+                  weight: FontWeight.w400,
+                  color: c.inkSoft,
+                  height: 1.75,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '— ${quote.author}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.sans(size: 10, color: c.muted, letterSpacing: 0.3),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  GestureDetector(
+                    onTap: onNextQuote,
+                    behavior: HitTestBehavior.opaque,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.refresh_rounded, size: 11, color: c.muted),
+                          const SizedBox(width: 3),
+                          Text('换一句', style: AppText.sans(size: 9.5, color: c.muted)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              GestureDetector(
+                onTap: onAddMessage,
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 7),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.add_comment_outlined, size: 12, color: c.accent),
+                      const SizedBox(width: 5),
+                      Text(
+                        '给未来的自己留句话',
+                        style: AppText.sans(
+                          size: 10.5,
+                          weight: FontWeight.w500,
+                          color: c.accent,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                      const SizedBox(width: 3),
+                      Icon(Icons.arrow_forward_rounded, size: 11, color: c.accent),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
         Row(
           children: [
             Text(
@@ -583,86 +743,6 @@ class _WeatherPlaceholder extends StatelessWidget {
   Color inks(Color color) => color.withValues(alpha: 0.8);
 }
 
-class _QuoteCard extends StatelessWidget {
-  const _QuoteCard({required this.quote, required this.onNext});
-
-  final Quote quote;
-  final VoidCallback onNext;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return PaperCard(
-      color: c.surface,
-      padding: const EdgeInsets.fromLTRB(22, 18, 18, 18),
-      child: Stack(
-        children: [
-          Positioned(
-            right: 0,
-            top: -14,
-            child: Text(
-              '”',
-              style: AppText.displayStyle(
-                size: 78,
-                color: c.accent.withValues(alpha: 0.14),
-                height: 1,
-              ),
-            ),
-          ),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Eyebrow('今日谏言', color: c.accent),
-                  const Spacer(),
-                  GestureDetector(
-                    onTap: onNext,
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.refresh_rounded, size: 12, color: c.muted),
-                          const SizedBox(width: 3),
-                          Text('换一句', style: AppText.sans(size: 10, color: c.muted)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Padding(
-                padding: const EdgeInsets.only(right: 10),
-                child: Text(
-                  quote.text,
-                  style: AppText.serifStyle(
-                    size: 17,
-                    weight: FontWeight.w500,
-                    color: c.ink,
-                    height: 1.8,
-                    letterSpacing: 0.6,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Container(width: 18, height: 1, color: c.accent.withValues(alpha: 0.6)),
-                  const SizedBox(width: 8),
-                  Text(quote.author, style: AppText.sans(size: 10.5, color: c.muted, letterSpacing: 0.4)),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _WeeklyEntry extends StatelessWidget {
   const _WeeklyEntry({
     required this.taskDone,
@@ -726,61 +806,6 @@ class _WeeklyEntry extends StatelessWidget {
       ),
     );
   }
-}
-
-class _StatsStrip extends StatelessWidget {  const _StatsStrip({required this.store});
-
-  final AppStore store;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return PaperCard(
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 17),
-      elevated: false,
-      color: c.surface.withValues(alpha: 0.6),
-      child: Row(
-        children: [
-          Expanded(
-            child: StatBlock(
-              value: '${store.diaryStreakCount}',
-              label: '连续手札 / 天',
-              tone: c.accent,
-            ),
-          ),
-          _divider(c),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: StatBlock(
-                value: '${store.weekDoneCount}',
-                label: '本周完成任务',
-                tone: c.moss,
-              ),
-            ),
-          ),
-          _divider(c),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(left: 16),
-              child: StatBlock(
-                value: '${store.recordDays}',
-                label: '冒险足迹 / 天',
-                tone: c.ink,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _divider(AppColors c) => Container(
-        width: 0.8,
-        height: 34,
-        margin: const EdgeInsets.only(left: 16),
-        color: c.line.withValues(alpha: 0.8),
-      );
 }
 
 class _HomeTaskRow extends StatelessWidget {
@@ -1132,38 +1157,3 @@ class _SparklinePainter extends CustomPainter {
   bool shouldRepaint(covariant _SparklinePainter old) =>
       old.values != values || old.maxValue != maxValue || old.color != color;
 }
-
-class _QuickAction extends StatelessWidget {
-  const _QuickAction({required this.icon, required this.label, required this.onTap});
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.colors;
-    return Material(
-      color: c.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(18),
-        side: BorderSide(color: c.line.withValues(alpha: 0.8), width: 0.8),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Column(
-            children: [
-              Icon(icon, size: 21, color: c.accent),
-              const SizedBox(height: 8),
-              Text(label, style: AppText.sans(size: 11.5, weight: FontWeight.w500, color: c.inkSoft)),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-

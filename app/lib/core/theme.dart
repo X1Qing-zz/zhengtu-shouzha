@@ -1,6 +1,8 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import 'season.dart';
+
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
   const AppColors({
@@ -84,6 +86,144 @@ class AppColors extends ThemeExtension<AppColors> {
     shadow: Color(0xFF000000),
     isDark: true,
   );
+
+  /// Spring: tender green + pink.
+  static final AppColors springLight = light.copyWith(
+    bg: const Color(0xFFF7F4EC),
+    surface: const Color(0xFFFFFCF7),
+    raised: const Color(0xFFFFFFFF),
+    sunken: const Color(0xFFEBE7DC),
+    ink: const Color(0xFF292A24),
+    inkSoft: const Color(0xFF505247),
+    muted: const Color(0xFF8A8C7D),
+    line: const Color(0xFFE2DFD2),
+    accent: const Color(0xFF63825A),
+    accentSoft: const Color(0xFFE6EFDE),
+    moss: const Color(0xFF5F7F52),
+    mossSoft: const Color(0xFFE2ECDC),
+    terra: const Color(0xFFAD6378),
+    terraSoft: const Color(0xFFF3E1E7),
+    gold: const Color(0xFFC7A65A),
+    sky: const Color(0xFF8DA9A2),
+    shadow: const Color(0xFF5D584A),
+  );
+
+  static final AppColors springDark = dark.copyWith(
+    bg: const Color(0xFF12160F),
+    surface: const Color(0xFF1A2118),
+    raised: const Color(0xFF222B1F),
+    sunken: const Color(0xFF0D110C),
+    ink: const Color(0xFFF3EFE3),
+    inkSoft: const Color(0xFFD4D0C2),
+    muted: const Color(0xFF969486),
+    line: const Color(0xFF313A2B),
+    accent: const Color(0xFFA8C79A),
+    accentSoft: const Color(0xFF2A3524),
+    moss: const Color(0xFF9DBA8E),
+    mossSoft: const Color(0xFF273324),
+    terra: const Color(0xFFE0A3B2),
+    terraSoft: const Color(0xFF3A252B),
+    gold: const Color(0xFFD9BC7A),
+    sky: const Color(0xFF9DBBB0),
+  );
+
+  /// Summer: vivid green + blue.
+  static final AppColors summerLight = light.copyWith(
+    bg: const Color(0xFFF4F1E5),
+    surface: const Color(0xFFFCFAF2),
+    raised: const Color(0xFFFFFFFF),
+    sunken: const Color(0xFFE8E6D9),
+    ink: const Color(0xFF1F2A24),
+    inkSoft: const Color(0xFF46564C),
+    muted: const Color(0xFF7D8A80),
+    line: const Color(0xFFD8E0D6),
+    accent: const Color(0xFF3E7D5A),
+    accentSoft: const Color(0xFFDDEDE1),
+    moss: const Color(0xFF2F6D4B),
+    mossSoft: const Color(0xFFD9EBDD),
+    terra: const Color(0xFFC26A4A),
+    terraSoft: const Color(0xFFF3DFD7),
+    gold: const Color(0xFFC7A64A),
+    sky: const Color(0xFF4C7E9E),
+    shadow: const Color(0xFF3E5548),
+  );
+
+  static final AppColors summerDark = dark.copyWith(
+    bg: const Color(0xFF0F1512),
+    surface: const Color(0xFF171F1A),
+    raised: const Color(0xFF1F2A23),
+    sunken: const Color(0xFF0B100D),
+    ink: const Color(0xFFEDF3EA),
+    inkSoft: const Color(0xFFC9D7CC),
+    muted: const Color(0xFF8EA194),
+    line: const Color(0xFF2A3A30),
+    accent: const Color(0xFF7FC49A),
+    accentSoft: const Color(0xFF20382A),
+    moss: const Color(0xFF8FD3AA),
+    mossSoft: const Color(0xFF1D3326),
+    terra: const Color(0xFFE09A78),
+    terraSoft: const Color(0xFF38251F),
+    gold: const Color(0xFFDCC06C),
+    sky: const Color(0xFF7FB6D4),
+  );
+
+  /// Autumn: gold + orange-red. The original warm-paper palette.
+  static const AppColors autumnLight = light;
+  static const AppColors autumnDark = dark;
+
+  /// Winter: snow white + grey-blue.
+  static final AppColors winterLight = light.copyWith(
+    bg: const Color(0xFFF3F6F8),
+    surface: const Color(0xFFFCFDFE),
+    raised: const Color(0xFFFFFFFF),
+    sunken: const Color(0xFFE7EDF2),
+    ink: const Color(0xFF24303A),
+    inkSoft: const Color(0xFF4B5B68),
+    muted: const Color(0xFF8494A1),
+    line: const Color(0xFFD7E1E8),
+    accent: const Color(0xFF5E8098),
+    accentSoft: const Color(0xFFE3EDF4),
+    moss: const Color(0xFF6E8B7A),
+    mossSoft: const Color(0xFFE2ECE6),
+    terra: const Color(0xFFB56A5E),
+    terraSoft: const Color(0xFFF3E2DF),
+    gold: const Color(0xFFB08A4E),
+    sky: const Color(0xFF7FA6C0),
+    shadow: const Color(0xFF4B5C6B),
+  );
+
+  static final AppColors winterDark = dark.copyWith(
+    bg: const Color(0xFF0F1419),
+    surface: const Color(0xFF171E24),
+    raised: const Color(0xFF1F2931),
+    sunken: const Color(0xFF0B0F13),
+    ink: const Color(0xFFEDF3F7),
+    inkSoft: const Color(0xFFCBD7DF),
+    muted: const Color(0xFF8B9BA7),
+    line: const Color(0xFF2C3842),
+    accent: const Color(0xFFA9C4D6),
+    accentSoft: const Color(0xFF24333E),
+    moss: const Color(0xFF93B3A0),
+    mossSoft: const Color(0xFF203028),
+    terra: const Color(0xFFD58E80),
+    terraSoft: const Color(0xFF362421),
+    gold: const Color(0xFFD6BC82),
+    sky: const Color(0xFF8EBDD8),
+  );
+
+  static AppColors forSeason(Season season, Brightness brightness) {
+    final darkMode = brightness == Brightness.dark;
+    switch (season) {
+      case Season.spring:
+        return darkMode ? springDark : springLight;
+      case Season.summer:
+        return darkMode ? summerDark : summerLight;
+      case Season.autumn:
+        return darkMode ? autumnDark : autumnLight;
+      case Season.winter:
+        return darkMode ? winterDark : winterLight;
+    }
+  }
 
   @override
   AppColors copyWith({
@@ -258,8 +398,8 @@ TextTheme buildTextTheme(AppColors c) {
   );
 }
 
-ThemeData buildTheme(Brightness brightness) {
-  final c = brightness == Brightness.dark ? AppColors.dark : AppColors.light;
+ThemeData buildTheme(Brightness brightness, {DateTime? now}) {
+  final c = AppColors.forSeason(Season.of(now ?? DateTime.now()), brightness);
   final scheme = ColorScheme(
     brightness: brightness,
     primary: c.accent,

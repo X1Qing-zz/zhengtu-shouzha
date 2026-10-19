@@ -20,6 +20,7 @@ class SettingsStore {
   static const _cityLonKey = 'city_lon';
   static const _lastBackupKey = 'last_backup_at';
   static const _lastBackupPathKey = 'last_backup_path';
+  static const _futureMessagesKey = 'future_messages';
 
   String get name {
     final value = _prefs.getString(_nameKey)?.trim() ?? '';
@@ -80,6 +81,31 @@ class SettingsStore {
   Future<void> setLastBackupPath(String value) =>
       _prefs.setString(_lastBackupPathKey, value);
 
+  List<String> get futureMessages {
+    final stored = _prefs.getStringList(_futureMessagesKey) ?? const <String>[];
+    return [
+      for (final message in stored)
+        if (message.trim().isNotEmpty) message.trim(),
+    ];
+  }
+
+  Future<void> addFutureMessage(String text) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return;
+    final messages = futureMessages;
+    if (messages.contains(trimmed)) return;
+    messages.add(trimmed.length > 200 ? trimmed.substring(0, 200) : trimmed);
+    await _prefs.setStringList(_futureMessagesKey, messages);
+  }
+
+  Future<void> replaceFutureMessages(List<String> messages) async {
+    final cleaned = [
+      for (final message in messages)
+        if (message.trim().isNotEmpty) message.trim(),
+    ];
+    await _prefs.setStringList(_futureMessagesKey, cleaned);
+  }
+
   Map<String, Object?> exportForBackup() => {
         'name': name,
         'theme_mode': themeMode.name,
@@ -88,6 +114,7 @@ class SettingsStore {
         'city_lat': latitude,
         'city_lon': longitude,
         'onboarded': true,
+        'future_messages': futureMessages,
       };
 
   Future<void> importFromBackup(Map<String, Object?> data) async {
@@ -116,6 +143,13 @@ class SettingsStore {
     final locationMode = data['location_mode'];
     if (locationMode is String) {
       await setAutoLocation(locationMode == 'auto');
+    }
+
+    final futureMessages = data['future_messages'];
+    if (futureMessages is List) {
+      await replaceFutureMessages(futureMessages.whereType<String>().toList());
+    } else {
+      await replaceFutureMessages(const []);
     }
 
     await setOnboarded(true);

@@ -45,7 +45,7 @@ class AppStore extends ChangeNotifier {
     if (demoMode) {
       await store._seedDemoData();
     }
-    unawaited(store.loadWeather());
+    unawaited(store.loadWeather(force: true));
     return store;
   }
 
@@ -126,7 +126,13 @@ class AppStore extends ChangeNotifier {
     _weatherError = null;
     notifyListeners();
     try {
-      if (!force) {
+      if (force) {
+        final cached = await _weatherRepo.findByDate(DateTime.now());
+        if (cached != null && _weather == null) {
+          _weather = cached;
+          notifyListeners();
+        }
+      } else {
         final cached = await _weatherRepo.findByDate(DateTime.now());
         if (cached != null) {
           _weather = cached;
@@ -517,16 +523,37 @@ class AppStore extends ChangeNotifier {
   // Quote
   // ---------------------------------------------------------------------------
 
-  Quote get quote => kQuotes[(dayOfYear(DateTime.now()) + _quoteOffset) % kQuotes.length];
+  Quote get quote {
+    final pool = _quotePool;
+    return pool[(dayOfYear(DateTime.now()) + _quoteOffset) % pool.length];
+  }
+
+  List<Quote> get _quotePool => [
+        ...kQuotes,
+        for (final message in _settings.futureMessages) Quote(message, '未来的你'),
+      ];
+
+  List<String> get futureMessages => _settings.futureMessages;
+
+  Future<void> addFutureMessage(String text) async {
+    await _settings.addFutureMessage(text);
+    final trimmed = text.trim();
+    final pool = _quotePool;
+    final index = pool.lastIndexWhere((quote) => quote.text == trimmed);
+    if (index >= 0) {
+      _quoteOffset = (index - dayOfYear(DateTime.now())) % pool.length;
+    }
+    notifyListeners();
+  }
 
   void nextQuote() {
-    _quoteOffset = (_quoteOffset + 1) % kQuotes.length;
+    final pool = _quotePool;
+    _quoteOffset = (_quoteOffset + 1) % pool.length;
     notifyListeners();
   }
 
   Future<void> _seedDemoData() async {
     if (_diaries.isNotEmpty || _tasks.isNotEmpty || _expenses.isNotEmpty) return;
-    final now = DateTime.now();
     final base = today();
     DateTime at(int daysAgo, int hour, int minute) {
       final d = base.subtract(Duration(days: daysAgo));
@@ -695,7 +722,7 @@ class AppStore extends ChangeNotifier {
     }
 
     await _loadData();
-    _quoteOffset = now.day % kQuotes.length;
+    _quoteOffset = 0;
   }
 
   void _sortDiaries() => _diaries.sort((a, b) => b.date.compareTo(a.date));

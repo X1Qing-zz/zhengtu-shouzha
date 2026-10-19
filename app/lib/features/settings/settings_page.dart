@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../core/app_info.dart';
 import '../../core/date_utils.dart';
+import '../../core/season.dart';
 import '../../core/theme.dart';
 import '../../data/backup_service.dart';
 import '../../state/app_store.dart';
@@ -118,6 +119,17 @@ class SettingsPage extends StatelessWidget {
                     options: const ['跟随系统', '浅色', '深色'],
                     selected: store.themeMode.index,
                     onChanged: (index) => store.setThemeMode(ThemeMode.values[index]),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Icon(Icons.eco_outlined, size: 13, color: c.moss),
+                      const SizedBox(width: 6),
+                      Text(
+                        '当前季节配色：${Season.of(DateTime.now()).label} · ${Season.of(DateTime.now()).paletteName}',
+                        style: AppText.sans(size: 10.5, color: c.muted),
+                      ),
+                    ],
                   ),
                 ],
               ),

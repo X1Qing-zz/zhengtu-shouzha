@@ -13,6 +13,7 @@ class CompassMark extends StatelessWidget {
     this.accent,
     this.rotating = false,
     this.stroke = 1.4,
+    this.needleAngle = 0,
   });
 
   final double size;
@@ -21,6 +22,9 @@ class CompassMark extends StatelessWidget {
   final bool rotating;
   final double stroke;
 
+  /// Rotation of the needle only, in radians. The compass case stays fixed.
+  final double needleAngle;
+
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
@@ -28,6 +32,7 @@ class CompassMark extends StatelessWidget {
       color: color ?? c.ink,
       accent: accent ?? c.accent,
       stroke: stroke,
+      needleAngle: needleAngle,
     );
     if (!rotating) {
       return SizedBox(
@@ -80,11 +85,17 @@ class _RotatingCompassState extends State<_RotatingCompass>
 }
 
 class _CompassPainter extends CustomPainter {
-  _CompassPainter({required this.color, required this.accent, required this.stroke});
+  _CompassPainter({
+    required this.color,
+    required this.accent,
+    required this.stroke,
+    required this.needleAngle,
+  });
 
   final Color color;
   final Color accent;
   final double stroke;
+  final double needleAngle;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -120,6 +131,22 @@ class _CompassPainter extends CustomPainter {
       );
     }
 
+    // East-west bar stays fixed; only the needle turns.
+    final eastWest = Path()
+      ..moveTo(17, 50)
+      ..lineTo(50, 42)
+      ..lineTo(50, 50)
+      ..lineTo(83, 50)
+      ..lineTo(50, 58)
+      ..lineTo(50, 50)
+      ..close();
+    canvas.drawPath(eastWest, Paint()..color = color.withValues(alpha: 0.16));
+
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    canvas.rotate(needleAngle);
+    canvas.translate(-center.dx, -center.dy);
+
     // North needle, half filled.
     final needle = Path()
       ..moveTo(50, 17)
@@ -133,15 +160,8 @@ class _CompassPainter extends CustomPainter {
       ..lineTo(50, 50)
       ..close();
     canvas.drawPath(south, Paint()..color = color.withValues(alpha: 0.45));
-    final eastWest = Path()
-      ..moveTo(17, 50)
-      ..lineTo(50, 42)
-      ..lineTo(50, 50)
-      ..lineTo(83, 50)
-      ..lineTo(50, 58)
-      ..lineTo(50, 50)
-      ..close();
-    canvas.drawPath(eastWest, Paint()..color = color.withValues(alpha: 0.16));
+
+    canvas.restore();
 
     canvas.drawCircle(center, 3.4, Paint()..color = color);
     canvas.drawCircle(center, 1.4, Paint()..color = accent);
@@ -150,5 +170,8 @@ class _CompassPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _CompassPainter old) =>
-      old.color != color || old.accent != accent || old.stroke != stroke;
+      old.color != color ||
+      old.accent != accent ||
+      old.stroke != stroke ||
+      old.needleAngle != needleAngle;
 }

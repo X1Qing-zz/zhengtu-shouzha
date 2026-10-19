@@ -1,5 +1,7 @@
 import 'dart:math' as math;
 
+import 'season.dart';
+
 const List<String> kWeekdays = ['一', '二', '三', '四', '五', '六', '日'];
 
 String two(int n) => n.toString().padLeft(2, '0');
@@ -46,11 +48,13 @@ String fullDateLabel(DateTime d) => '${d.year} 年 ${d.month} 月 ${d.day} 日 �
 String timeHm(DateTime d) => '${two(d.hour)}:${two(d.minute)}';
 
 String greetingFor(DateTime now, String name) {
-  final hour = now.hour;
-  if (hour < 5) return '夜深了，$name';
-  if (hour < 11) return '早安，$name';
-  if (hour < 14) return '午安，$name';
-  if (hour < 18) return '下午好，$name';
+  final minutes = now.hour * 60 + now.minute;
+  if (minutes < 5 * 60) return '夜深了，$name，该睡觉了';
+  if (minutes < 8 * 60) return '早安，$name';
+  if (minutes < 11 * 60 + 30) return '上午好，$name';
+  if (minutes < 13 * 60 + 30) return '午安，$name';
+  if (minutes < 17 * 60 + 30) return '下午好，$name';
+  if (minutes < 22 * 60) return '晚上好，$name';
   return '晚安，$name';
 }
 
@@ -132,13 +136,7 @@ String monthEnglish(DateTime d) {
 }
 
 /// Rough season label used for the home greeting.
-String seasonLabel(DateTime d) {
-  final m = d.month;
-  if (m >= 3 && m <= 5) return '春日';
-  if (m >= 6 && m <= 8) return '盛夏';
-  if (m >= 9 && m <= 11) return '深秋';
-  return '凛冬';
-}
+String seasonLabel(DateTime d) => Season.of(d).label;
 
 int randomSeedFor(DateTime d) => d.year * 10000 + d.month * 100 + d.day;
 
