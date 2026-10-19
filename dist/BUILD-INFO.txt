@@ -19,9 +19,9 @@ SHA256：91EBBB9CA0EA296FDE8C9354CD60A4743D51B7E83847FB1EA9F6D6852C00B519
 
 发布状态
 --------
-- 本地测试包，**未 commit / 未 push**。
-- GitHub 仍是 v0.4.0；v0.4.1 本地 tag `v0.4.1`，v0.5.0 本地 tag `v0.5.0`。
-- 用户测试确认后再发 v0.5.2。
+- 本地已 commit + tag `v0.5.2`。
+- GitHub 仍是 v0.4.0；推送待完成（需要更新 `Github.md` 里的 GitHub token）。
+- 更新 token 后通过 Git Data API 上传最新提交，并发布 v0.5.2 Release。
 
 环境
 ----
