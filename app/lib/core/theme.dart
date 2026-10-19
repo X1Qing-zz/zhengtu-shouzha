@@ -167,9 +167,45 @@ class AppColors extends ThemeExtension<AppColors> {
     sky: const Color(0xFF7FB6D4),
   );
 
-  /// Autumn: gold + orange-red. The original warm-paper palette.
-  static const AppColors autumnLight = light;
-  static const AppColors autumnDark = dark;
+  /// Autumn: gold + orange-red, distinct from the old warm-paper copper.
+  static final AppColors autumnLight = light.copyWith(
+    bg: const Color(0xFFFBF2DD),
+    surface: const Color(0xFFFFF9EA),
+    raised: const Color(0xFFFFFCF3),
+    sunken: const Color(0xFFF2E3C3),
+    ink: const Color(0xFF2C2415),
+    inkSoft: const Color(0xFF59492E),
+    muted: const Color(0xFF8F7A54),
+    line: const Color(0xFFE8D5AE),
+    accent: const Color(0xFFB17A12),
+    accentSoft: const Color(0xFFF7E5B9),
+    moss: const Color(0xFF7A7D35),
+    mossSoft: const Color(0xFFECEBCB),
+    terra: const Color(0xFFC6522C),
+    terraSoft: const Color(0xFFF8DCCB),
+    gold: const Color(0xFFD9A21B),
+    sky: const Color(0xFF8F9A72),
+    shadow: const Color(0xFF6B4D23),
+  );
+
+  static final AppColors autumnDark = dark.copyWith(
+    bg: const Color(0xFF171208),
+    surface: const Color(0xFF21190D),
+    raised: const Color(0xFF2B2111),
+    sunken: const Color(0xFF100B05),
+    ink: const Color(0xFFF8EBCF),
+    inkSoft: const Color(0xFFDCC7A2),
+    muted: const Color(0xFFA28A62),
+    line: const Color(0xFF3B2C18),
+    accent: const Color(0xFFE5B34E),
+    accentSoft: const Color(0xFF3A2B12),
+    moss: const Color(0xFFB3B36A),
+    mossSoft: const Color(0xFF2F2F1A),
+    terra: const Color(0xFFE4784D),
+    terraSoft: const Color(0xFF3F2416),
+    gold: const Color(0xFFF3C862),
+    sky: const Color(0xFFB5A074),
+  );
 
   /// Winter: snow white + grey-blue.
   static final AppColors winterLight = light.copyWith(

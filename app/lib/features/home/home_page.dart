@@ -383,12 +383,14 @@ class _HomeHeader extends StatelessWidget {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      '— ${quote.author}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: AppText.sans(size: 10, color: c.muted, letterSpacing: 0.3),
-                    ),
+                    child: quote.author == '征途手札'
+                        ? const SizedBox.shrink()
+                        : Text(
+                            '— ${quote.author}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.sans(size: 10, color: c.muted, letterSpacing: 0.3),
+                          ),
                   ),
                   const SizedBox(width: 8),
                   GestureDetector(
