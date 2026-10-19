@@ -50,7 +50,6 @@ class HomePage extends StatelessWidget {
                 now: now,
                 streak: store.diaryStreakCount,
                 quote: store.quote,
-                onNextQuote: store.nextQuote,
                 onAddMessage: () => _addFutureMessage(context, store),
                 onSettings: () => Navigator.of(context).push(
                   MaterialPageRoute(builder: (_) => const SettingsPage()),
@@ -301,7 +300,6 @@ class _HomeHeader extends StatelessWidget {
     required this.now,
     required this.streak,
     required this.quote,
-    required this.onNextQuote,
     required this.onAddMessage,
     required this.onSettings,
   });
@@ -310,7 +308,6 @@ class _HomeHeader extends StatelessWidget {
   final DateTime now;
   final int streak;
   final Quote quote;
-  final VoidCallback onNextQuote;
   final VoidCallback onAddMessage;
   final VoidCallback onSettings;
 
@@ -436,44 +433,27 @@ class _HomeHeader extends StatelessWidget {
                 maxLines: 4,
                 overflow: TextOverflow.ellipsis,
                 style: AppText.serifStyle(
-                  size: 15.5,
+                  size: 17,
                   weight: FontWeight.w400,
                   color: c.inkSoft,
-                  height: 1.75,
+                  height: 1.7,
                   letterSpacing: 0.4,
                 ),
               ),
-              const SizedBox(height: 6),
-              Row(
-                children: [
-                  Expanded(
-                    child: quote.author == '征途手札'
-                        ? const SizedBox.shrink()
-                        : Text(
-                            '— ${quote.author}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: AppText.sans(size: 10, color: c.inkSoft.withValues(alpha: 0.78), letterSpacing: 0.3),
-                          ),
+              const SizedBox(height: 8),
+              if (quote.author != '征途手札') ...[
+                Text(
+                  '— ${quote.author}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.sans(
+                    size: 10,
+                    color: c.inkSoft.withValues(alpha: 0.78),
+                    letterSpacing: 0.3,
                   ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
-                    onTap: onNextQuote,
-                    behavior: HitTestBehavior.opaque,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.refresh_rounded, size: 11, color: c.inkSoft),
-                          const SizedBox(width: 3),
-                          Text('换一句', style: AppText.sans(size: 9.5, color: c.inkSoft)),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                const SizedBox(height: 6),
+              ],
               GestureDetector(
                 onTap: onAddMessage,
                 behavior: HitTestBehavior.opaque,

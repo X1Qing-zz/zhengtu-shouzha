@@ -26,24 +26,24 @@ class SeasonVisuals {
     if (c.isDark) {
       switch (season) {
         case Season.spring:
-          return const [Color(0xFF141B12), Color(0xFF1D2A1A), Color(0xFF241B22)];
+          return const [Color(0xFF141B12), Color(0xFF1D2A1A), Color(0xFF2A1E27)];
         case Season.summer:
-          return const [Color(0xFF0E1B16), Color(0xFF122A20), Color(0xFF102833)];
+          return const [Color(0xFF0E1B16), Color(0xFF122A20), Color(0xFF102C24)];
         case Season.autumn:
-          return const [Color(0xFF1C1208), Color(0xFF2A190B), Color(0xFF32190D)];
+          return const [Color(0xFF1C1208), Color(0xFF2B1A09), Color(0xFF331B0B)];
         case Season.winter:
           return const [Color(0xFF0F171F), Color(0xFF16232D), Color(0xFF1A2C38)];
       }
     }
     switch (season) {
       case Season.spring:
-        return const [Color(0xFFF7FBF1), Color(0xFFECF5E2), Color(0xFFF9E8EE)];
+        return const [Color(0xFFF8FBF2), Color(0xFFF3E7ED), Color(0xFFF8DCE8)];
       case Season.summer:
-        return const [Color(0xFFF6FAEE), Color(0xFFE2F2E7), Color(0xFFDFF0F8)];
+        return const [Color(0xFFF4FAEB), Color(0xFFDDF2DE), Color(0xFFD8EFE8)];
       case Season.autumn:
-        return const [Color(0xFFFFF3D6), Color(0xFFFBE2B4), Color(0xFFF8D0B1)];
+        return const [Color(0xFFFFF1C8), Color(0xFFF9D794), Color(0xFFF3BF83)];
       case Season.winter:
-        return const [Color(0xFFF8FBFD), Color(0xFFE9F2F8), Color(0xFFDEEBF3)];
+        return const [Color(0xFFFCFEFF), Color(0xFFF4F9FC), Color(0xFFE9F3F9)];
     }
   }
 
@@ -51,24 +51,24 @@ class SeasonVisuals {
     if (c.isDark) {
       switch (season) {
         case Season.spring:
-          return const [Color(0xFF22301D), Color(0xFF2C4025), Color(0xFF3A252D)];
+          return const [Color(0xFF22301D), Color(0xFF2C4025), Color(0xFF452B36)];
         case Season.summer:
-          return const [Color(0xFF103024), Color(0xFF143B2B), Color(0xFF153448)];
+          return const [Color(0xFF103024), Color(0xFF17402C), Color(0xFF153A30)];
         case Season.autumn:
-          return const [Color(0xFF5A360C), Color(0xFF6A2E10), Color(0xFF3C1B09)];
+          return const [Color(0xFF5C3B08), Color(0xFF66330B), Color(0xFF3A1C06)];
         case Season.winter:
           return const [Color(0xFF1B2E3C), Color(0xFF234252), Color(0xFF28495A)];
       }
     }
     switch (season) {
       case Season.spring:
-        return const [Color(0xFFF4FBEE), Color(0xFFE1F1D8), Color(0xFFF8DEE6)];
+        return const [Color(0xFFF4FBEE), Color(0xFFECD9E4), Color(0xFFF6C9D8)];
       case Season.summer:
-        return const [Color(0xFFF6FAEA), Color(0xFFD8EFDF), Color(0xFFD2E8F4)];
+        return const [Color(0xFFF4FAEA), Color(0xFFD5EFDA), Color(0xFFCBE9DD)];
       case Season.autumn:
-        return const [Color(0xFFFFF1C6), Color(0xFFF9D28B), Color(0xFFF2AC7C)];
+        return const [Color(0xFFFFF0B4), Color(0xFFF7CE73), Color(0xFFEDB35F)];
       case Season.winter:
-        return const [Color(0xFFF9FDFF), Color(0xFFDFEDF7), Color(0xFFC9DDEB)];
+        return const [Color(0xFFFFFFFF), Color(0xFFF2F9FD), Color(0xFFE2EFF7)];
     }
   }
 
@@ -77,12 +77,12 @@ class SeasonVisuals {
       switch (season) {
         case Season.spring:
           return isDay
-              ? const [Color(0xFF2A3A24), Color(0xFF33492B), Color(0xFF3D2C33)]
-              : const [Color(0xFF182316), Color(0xFF1D2A1A), Color(0xFF251B22)];
+              ? const [Color(0xFF2D3F25), Color(0xFF3C3A30), Color(0xFF4A2E3A)]
+              : const [Color(0xFF182316), Color(0xFF1D2A1A), Color(0xFF2A1E27)];
         case Season.summer:
           return isDay
-              ? const [Color(0xFF16402F), Color(0xFF17483A), Color(0xFF153E4F)]
-              : const [Color(0xFF0E241C), Color(0xFF112E24), Color(0xFF0E2934)];
+              ? const [Color(0xFF16452F), Color(0xFF17523A), Color(0xFF15483F)]
+              : const [Color(0xFF0E241C), Color(0xFF112E24), Color(0xFF0E2B28)];
         case Season.autumn:
           return isDay
               ? const [Color(0xFF6A4313), Color(0xFF7A3F16), Color(0xFF4A2210)]
@@ -96,20 +96,20 @@ class SeasonVisuals {
     switch (season) {
       case Season.spring:
         return isDay
-            ? const [Color(0xFFD4E9C2), Color(0xFFB7D8AB), Color(0xFFECC3D0)]
-            : const [Color(0xFFD8E5D0), Color(0xFFC9DBD0), Color(0xFFE2D0DD)];
+            ? const [Color(0xFFD8EBC8), Color(0xFFDCC9D7), Color(0xFFEDB9CD)]
+            : const [Color(0xFFDFE8D4), Color(0xFFD9CAD9), Color(0xFFE6C1D4)];
       case Season.summer:
         return isDay
-            ? const [Color(0xFFD8EFE3), Color(0xFFC2E4E0), Color(0xFFC2DCEC)]
-            : const [Color(0xFFD3E5E2), Color(0xFFBED8E2), Color(0xFFC2D2E6)];
+            ? const [Color(0xFFD8EFD8), Color(0xFFBBE4C5), Color(0xFFC0DDE5)]
+            : const [Color(0xFFD7E9D6), Color(0xFFC3DFC8), Color(0xFFC3DCDD)];
       case Season.autumn:
         return isDay
-            ? const [Color(0xFFF8E2AE), Color(0xFFF3CE97), Color(0xFFEEB79B)]
-            : const [Color(0xFFF3D6B0), Color(0xFFEBC4A2), Color(0xFFE8B8AF)];
+            ? const [Color(0xFFF8DE9C), Color(0xFFF2C87C), Color(0xFFE9B06E)]
+            : const [Color(0xFFF3D296), Color(0xFFEBBE7E), Color(0xFFE2A978)];
       case Season.winter:
         return isDay
-            ? const [Color(0xFFEAF4FA), Color(0xFFD9E8F2), Color(0xFFCDE0EC)]
-            : const [Color(0xFFDDEAF3), Color(0xFFCBDDE9), Color(0xFFC0D3E2)];
+            ? const [Color(0xFFF8FCFE), Color(0xFFEFF7FB), Color(0xFFE5F1F8)]
+            : const [Color(0xFFF0F8FC), Color(0xFFE4F1F8), Color(0xFFD8E9F3)];
     }
   }
 
