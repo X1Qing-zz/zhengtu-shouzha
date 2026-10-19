@@ -5,6 +5,8 @@ import 'package:provider/provider.dart';
 
 import '../../core/date_utils.dart';
 import '../../core/formatters.dart';
+import '../../core/season.dart';
+import '../../core/season_visuals.dart';
 import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../../state/app_store.dart';
@@ -316,14 +318,76 @@ class _HomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final initial = name.trim().isEmpty ? '旅' : name.trim().substring(0, 1);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
+    final season = Season.of(now);
+    final secondary = SeasonVisuals.secondary(season, c);
+    return Container(
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(30),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: SeasonVisuals.hero(season, c),
+        ),
+        border: Border.all(
+          color: c.accent.withValues(alpha: c.isDark ? 0.24 : 0.34),
+          width: 0.9,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: secondary.withValues(alpha: c.isDark ? 0.22 : 0.18),
+            blurRadius: 32,
+            spreadRadius: -8,
+            offset: const Offset(0, 16),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned(
+            top: -70,
+            right: -55,
+            child: Container(
+              width: 190,
+              height: 190,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    secondary.withValues(alpha: c.isDark ? 0.30 : 0.34),
+                    secondary.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -85,
+            left: -60,
+            child: Container(
+              width: 180,
+              height: 180,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: RadialGradient(
+                  colors: [
+                    c.accent.withValues(alpha: c.isDark ? 0.18 : 0.22),
+                    c.accent.withValues(alpha: 0),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
         Row(
           children: [
             CompassMark(size: 20, color: c.inkSoft, accent: c.accent, stroke: 3),
             const SizedBox(width: 9),
-            Text('征途手札', style: AppText.eyebrow(color: c.muted, size: 9.5)),
+            Text('征途手札', style: AppText.eyebrow(color: c.inkSoft, size: 9.5)),
             const Spacer(),
             GestureDetector(
               onTap: onSettings,
@@ -347,7 +411,7 @@ class _HomeHeader extends StatelessWidget {
         const SizedBox(height: 20),
         Text(
           '${monthEnglish(now)} ${two(now.day).padLeft(2, '0')} · ${weekdayLabel(now)}',
-          style: AppText.eyebrow(color: c.muted),
+          style: AppText.eyebrow(color: c.inkSoft.withValues(alpha: 0.8)),
         ),
         const SizedBox(height: 9),
         Text(
@@ -361,7 +425,7 @@ class _HomeHeader extends StatelessWidget {
           padding: const EdgeInsets.only(left: 14),
           decoration: BoxDecoration(
             border: Border(
-              left: BorderSide(color: c.accent.withValues(alpha: 0.55), width: 1.6),
+              left: BorderSide(color: secondary.withValues(alpha: 0.75), width: 1.8),
             ),
           ),
           child: Column(
@@ -389,7 +453,7 @@ class _HomeHeader extends StatelessWidget {
                             '— ${quote.author}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: AppText.sans(size: 10, color: c.muted, letterSpacing: 0.3),
+                            style: AppText.sans(size: 10, color: c.inkSoft.withValues(alpha: 0.78), letterSpacing: 0.3),
                           ),
                   ),
                   const SizedBox(width: 8),
@@ -401,9 +465,9 @@ class _HomeHeader extends StatelessWidget {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.refresh_rounded, size: 11, color: c.muted),
+                          Icon(Icons.refresh_rounded, size: 11, color: c.inkSoft),
                           const SizedBox(width: 3),
-                          Text('换一句', style: AppText.sans(size: 9.5, color: c.muted)),
+                          Text('换一句', style: AppText.sans(size: 9.5, color: c.inkSoft)),
                         ],
                       ),
                     ),
@@ -418,19 +482,19 @@ class _HomeHeader extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.add_comment_outlined, size: 12, color: c.accent),
+                      Icon(Icons.add_comment_outlined, size: 12, color: secondary),
                       const SizedBox(width: 5),
                       Text(
                         '给未来的自己留句话',
                         style: AppText.sans(
                           size: 10.5,
                           weight: FontWeight.w500,
-                          color: c.accent,
+                          color: c.ink,
                           letterSpacing: 0.2,
                         ),
                       ),
                       const SizedBox(width: 3),
-                      Icon(Icons.arrow_forward_rounded, size: 11, color: c.accent),
+                      Icon(Icons.arrow_forward_rounded, size: 11, color: secondary),
                     ],
                   ),
                 ),
@@ -443,22 +507,26 @@ class _HomeHeader extends StatelessWidget {
           children: [
             Text(
               '${seasonLabel(now)} · 第 ${dayOfYear(now)} 天',
-              style: AppText.sans(size: 12, color: c.muted, letterSpacing: 0.4),
+              style: AppText.sans(size: 12, color: c.inkSoft, letterSpacing: 0.4),
             ),
             if (streak > 0) ...[
               const SizedBox(width: 10),
-              Container(width: 3, height: 3, decoration: BoxDecoration(color: c.accent, shape: BoxShape.circle)),
+              Container(width: 3, height: 3, decoration: BoxDecoration(color: secondary, shape: BoxShape.circle)),
               const SizedBox(width: 10),
-              Icon(Icons.local_fire_department_outlined, size: 13, color: c.accent),
+              Icon(Icons.local_fire_department_outlined, size: 13, color: secondary),
               const SizedBox(width: 3),
               Text(
                 '连续手札 $streak 天',
-                style: AppText.sans(size: 12, color: c.accent, weight: FontWeight.w500),
+                style: AppText.sans(size: 12, color: c.inkSoft, weight: FontWeight.w500),
               ),
             ],
           ],
         ),
-      ],
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -485,9 +553,10 @@ class WeatherCard extends StatelessWidget {
     final w = weather;
     final kind = w?.kind ?? WeatherKind.partly;
     final isDay = w?.isDay ?? true;
-    final colors = WeatherVisuals.gradient(kind, dark: c.isDark, isDay: isDay);
-    final ink = WeatherVisuals.ink(kind, dark: c.isDark, isDay: isDay);
-    final soft = WeatherVisuals.softInk(kind, dark: c.isDark, isDay: isDay);
+    final season = Season.of(DateTime.now());
+    final colors = SeasonVisuals.weather(season, c, isDay: isDay);
+    final ink = SeasonVisuals.weatherInk(colors, c);
+    final soft = ink.withValues(alpha: 0.78);
 
     return GestureDetector(
       onTap: w == null ? onRetry : onTap,
@@ -502,9 +571,13 @@ class WeatherCard extends StatelessWidget {
             end: Alignment.bottomRight,
             colors: colors,
           ),
+          border: Border.all(
+            color: c.isDark ? Colors.transparent : c.line.withValues(alpha: 0.55),
+            width: 0.8,
+          ),
           boxShadow: [
             BoxShadow(
-              color: colors.last.withValues(alpha: c.isDark ? 0.32 : 0.2),
+              color: colors.last.withValues(alpha: c.isDark ? 0.32 : 0.12),
               blurRadius: 30,
               offset: const Offset(0, 16),
               spreadRadius: -8,
@@ -600,7 +673,7 @@ class WeatherCard extends StatelessWidget {
                         size: 96,
                         color: ink.withValues(alpha: 0.92),
                         accent: isDay && kind != WeatherKind.clearNight
-                            ? const Color(0xFFF0C36B)
+                            ? c.gold
                             : ink,
                       ),
                     ],
@@ -761,10 +834,18 @@ class _WeeklyEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
+    final secondary = SeasonVisuals.secondary(context.season, c);
     return PaperCard(
       onTap: onTap,
       padding: const EdgeInsets.fromLTRB(18, 16, 14, 16),
-      color: c.accentSoft.withValues(alpha: c.isDark ? 0.38 : 0.55),
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [
+          c.accentSoft.withValues(alpha: c.isDark ? 0.72 : 0.92),
+          secondary.withValues(alpha: c.isDark ? 0.18 : 0.16),
+        ],
+      ),
       borderColor: c.accent.withValues(alpha: 0.18),
       elevated: false,
       child: Row(

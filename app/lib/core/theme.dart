@@ -335,6 +335,7 @@ extension AppThemeContext on BuildContext {
   AppColors get colors => Theme.of(this).extension<AppColors>() ?? AppColors.light;
   TextTheme get texts => Theme.of(this).textTheme;
   bool get isDark => Theme.of(this).brightness == Brightness.dark;
+  Season get season => Season.of(DateTime.now());
   Color get bg => colors.bg;
   Color get surface => colors.surface;
   Color get ink => colors.ink;

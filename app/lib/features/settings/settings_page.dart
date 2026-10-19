@@ -9,12 +9,14 @@ import 'package:share_plus/share_plus.dart';
 import '../../core/app_info.dart';
 import '../../core/date_utils.dart';
 import '../../core/season.dart';
+import '../../core/season_visuals.dart';
 import '../../core/theme.dart';
 import '../../data/backup_service.dart';
 import '../../state/app_store.dart';
 import '../../widgets/charts.dart';
 import '../../widgets/common.dart';
 import '../../widgets/compass_mark.dart';
+import '../../widgets/season_backdrop.dart';
 import '../weather/weather_page.dart';
 import '../weekly/weekly_review_page.dart';
 
@@ -28,12 +30,15 @@ class SettingsPage extends StatelessWidget {
     final initial = store.name.trim().isEmpty ? '旅' : store.name.trim().substring(0, 1);
 
     return Scaffold(
-      backgroundColor: c.bg,
-      body: SafeArea(
-        child: ListView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
-          children: [
+      backgroundColor: Colors.transparent,
+      body: Stack(
+        children: [
+          const Positioned.fill(child: SeasonBackdrop()),
+          SafeArea(
+            child: ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 40),
+              children: [
             Row(
               children: [
                 IconButton(
@@ -129,6 +134,18 @@ class SettingsPage extends StatelessWidget {
                         '当前季节配色：${Season.of(DateTime.now()).label} · ${Season.of(DateTime.now()).paletteName}',
                         style: AppText.sans(size: 10.5, color: c.muted),
                       ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      for (final season in Season.values)
+                        Expanded(
+                          child: _SeasonSwatch(
+                            season: season,
+                            current: season == Season.of(DateTime.now()),
+                          ),
+                        ),
                     ],
                   ),
                 ],
@@ -361,7 +378,9 @@ class SettingsPage extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ],
+  ),
+);
   }
 
   String _backupSubtitle(DateTime? last) {
@@ -566,6 +585,60 @@ class SettingsPage extends StatelessWidget {
     if (result != null) {
       await store.setName(result);
     }
+  }
+}
+
+class _SeasonSwatch extends StatelessWidget {
+  const _SeasonSwatch({required this.season, required this.current});
+
+  final Season season;
+  final bool current;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    final palette = AppColors.forSeason(season, Brightness.light);
+    return Semantics(
+      label: '${season.label} · ${season.paletteName}',
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 3),
+        child: Column(
+          children: [
+            Container(
+              width: 30,
+              height: 30,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: SeasonVisuals.hero(season, palette),
+                ),
+                border: Border.all(
+                  color: current ? c.ink : c.line,
+                  width: current ? 1.8 : 0.8,
+                ),
+              ),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              season.shortLabel,
+              style: AppText.sans(
+                size: 9.5,
+                weight: current ? FontWeight.w600 : FontWeight.w400,
+                color: current ? c.ink : c.muted,
+              ),
+            ),
+            Text(
+              season.paletteName,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppText.sans(size: 7.5, color: c.muted),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
