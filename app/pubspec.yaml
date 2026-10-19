@@ -1,7 +1,7 @@
 name: zhengtu_shouzha
 description: "征途手札 —— 记录大世界冒险生活的移动端手札"
 publish_to: "none"
-version: 0.5.2+8
+version: 0.5.6+12
 
 environment:
   sdk: ^3.13.0

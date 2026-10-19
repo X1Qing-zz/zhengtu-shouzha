@@ -8,6 +8,13 @@ import '../../state/app_store.dart';
 import '../../widgets/compass_mark.dart';
 import '../onboarding.dart';
 import '../shell.dart';
+import 'launch_targets.dart';
+
+/// A season-neutral paper color shared by the native launch window and the
+/// first Flutter frame. The opening scene then cross-fades into the current
+/// season, so changing seasons never produces a hard cream/blue flash.
+const Color _launchNeutralLight = Color(0xFFF5F3EE);
+const Color _launchNeutralDark = Color(0xFF14130F);
 
 /// A short opening scene: the compass fades in, the needle makes three quarters
 /// of a turn and settles north, then the emblem lands exactly on the small
@@ -23,7 +30,42 @@ class _LaunchGateState extends State<LaunchGate> with SingleTickerProviderStateM
   late final AnimationController _controller = AnimationController(
     vsync: this,
     duration: const Duration(milliseconds: 2800),
-  )..forward();
+  );
+
+  Rect? _targetRect;
+  bool _started = false;
+  int _measureAttempts = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _measureAndStart());
+  }
+
+  void _measureAndStart() {
+    if (!mounted || _started) return;
+
+    final store = context.read<AppStore>();
+    final key = store.onboarded
+        ? LaunchTargets.homeCompass
+        : LaunchTargets.onboardingCompass;
+    final targetContext = key.currentContext;
+    final renderObject = targetContext?.findRenderObject();
+
+    if (renderObject is RenderBox && renderObject.hasSize) {
+      final topLeft = renderObject.localToGlobal(Offset.zero);
+      setState(() {
+        _targetRect = topLeft & renderObject.size;
+      });
+    } else if (_measureAttempts < 5) {
+      _measureAttempts++;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _measureAndStart());
+      return;
+    }
+
+    _started = true;
+    _controller.forward();
+  }
 
   @override
   void dispose() {
@@ -33,6 +75,7 @@ class _LaunchGateState extends State<LaunchGate> with SingleTickerProviderStateM
 
   void _skip() {
     if (_controller.value >= 1) return;
+    _started = true;
     _controller.animateTo(
       1,
       duration: const Duration(milliseconds: 320),
@@ -60,6 +103,7 @@ class _LaunchGateState extends State<LaunchGate> with SingleTickerProviderStateM
                   child: _LaunchScene(
                     progress: progress,
                     onboarded: store.onboarded,
+                    targetRect: _targetRect,
                   ),
                 ),
               ),
@@ -71,10 +115,15 @@ class _LaunchGateState extends State<LaunchGate> with SingleTickerProviderStateM
 }
 
 class _LaunchScene extends StatelessWidget {
-  const _LaunchScene({required this.progress, required this.onboarded});
+  const _LaunchScene({
+    required this.progress,
+    required this.onboarded,
+    required this.targetRect,
+  });
 
   final double progress;
   final bool onboarded;
+  final Rect? targetRect;
 
   @override
   Widget build(BuildContext context) {
@@ -84,19 +133,24 @@ class _LaunchScene extends StatelessWidget {
     final safeTop = MediaQuery.paddingOf(context).top;
 
     final fade = Curves.easeOutCubic.transform((p / 0.14).clamp(0.0, 1.0));
+    final compassFade = Curves.easeInOutCubic.transform(((p - 0.02) / 0.30).clamp(0.0, 1.0));
+    final compassScale = 0.92 + Curves.easeOutCubic.transform(((p - 0.02) / 0.30).clamp(0.0, 1.0)) * 0.08;
     final turnT = Curves.easeInOutCubic.transform(((p - 0.05) / 0.61).clamp(0.0, 1.0));
     final moveT = Curves.easeInOutCubic.transform(((p - 0.66) / 0.28).clamp(0.0, 1.0));
     final textFade = (1 - ((p - 0.52) / 0.14)).clamp(0.0, 1.0);
     final bgFade = 1 - Curves.easeInOutCubic.transform(((p - 0.78) / 0.16).clamp(0.0, 1.0));
     final skipFade = (1 - ((p - 0.62) / 0.16)).clamp(0.0, 1.0) * 0.7;
+    final reveal = Curves.easeInOutCubic.transform((p / 0.34).clamp(0.0, 1.0));
+    final neutral = c.isDark ? _launchNeutralDark : _launchNeutralLight;
+    final baseColor = Color.lerp(neutral, c.bg, reveal)!;
 
-    // The target is deliberately identical to the compass in the page:
-    // home: size 20, x 20, vertically centered in the 40px header row,
-    //       so top = safeTop + 12 + (40 - 20) / 2 = safeTop + 22.
-    // onboarding: size 28 at (28, safeTop + 18), ink, stroke 2.4.
-    final target = onboarded
+    // Falls back only if the page has not laid out yet. The normal path uses
+    // the measured rect of the real compass, so padding/scroll changes cannot
+    // make the landing drift.
+    final fallbackTarget = onboarded
         ? Rect.fromLTWH(20, safeTop + 22, 20, 20)
         : Rect.fromLTWH(28, safeTop + 18, 28, 28);
+    final target = targetRect ?? fallbackTarget;
     final start = Rect.fromCenter(
       center: Offset(screen.width / 2, screen.height / 2),
       width: 122,
@@ -123,14 +177,17 @@ class _LaunchScene extends StatelessWidget {
               opacity: bgFade,
               child: Stack(
                 children: [
-                  Positioned.fill(child: ColoredBox(color: c.bg)),
+                  Positioned.fill(child: ColoredBox(color: baseColor)),
                   Positioned.fill(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          center: const Alignment(0, -0.15),
-                          radius: 0.95,
-                          colors: [glow, c.bg],
+                    child: Opacity(
+                      opacity: reveal,
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: RadialGradient(
+                            center: const Alignment(0, -0.15),
+                            radius: 0.95,
+                            colors: [glow, c.bg],
+                          ),
                         ),
                       ),
                     ),
@@ -143,13 +200,16 @@ class _LaunchScene extends StatelessWidget {
             rect: compassRect,
             child: IgnorePointer(
               child: Opacity(
-                opacity: fade,
-                child: CompassMark(
-                  size: compassRect.width,
-                  color: compassColor,
-                  accent: c.accent,
-                  stroke: stroke,
-                  needleAngle: angle,
+                opacity: compassFade,
+                child: Transform.scale(
+                  scale: compassScale,
+                  child: CompassMark(
+                    size: compassRect.width,
+                    color: compassColor,
+                    accent: c.accent,
+                    stroke: stroke,
+                    needleAngle: angle,
+                  ),
                 ),
               ),
             ),

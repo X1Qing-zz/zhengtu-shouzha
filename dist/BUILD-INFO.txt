@@ -1,27 +1,25 @@
-征途手札 v0.5.2 · Android APK（本地测试包）
+征途手札 v0.5.6 · Android APK（本地测试包）
 ================================================
 
 应用名称：征途手札
 包名：com.zhengtu.shouzha
-版本：0.5.2 (versionCode 8)
+版本：0.5.6 (versionCode 12)
 构建日期：2026-10-19
 构建类型：Release（universal APK，含 arm64-v8a / armeabi-v7a / x86_64）
 签名：当前使用 Flutter 模板的 debug 签名，仅供安装体验，上架前需替换为正式签名。
-SHA256：91EBBB9CA0EA296FDE8C9354CD60A4743D51B7E83847FB1EA9F6D6852C00B519
+SHA256：97D79E8406E49D061055F6B8365D0A0DA64B777BAF0A14E0EF45159719375351
 
-本版重点：首屏谏言排版
+本版重点：罗盘柔和渐显
 ------------------------
-- 去掉谏言下方的「换一句」，首屏只保留每日一句
-- 谏言正文字号 15.5 → 17，仍小于问候语（29）
-- 行高与留白同步调整，长句最多 4 行
-- 保留 v0.5.1 的四季色彩微调和淡彩天气卡
+- 罗盘出现改为约 900ms 的柔和渐显（淡入）
+- 带 0.92 → 1 的轻微放大，不再突然出现
+- 保留 v0.5.5 的约 950ms 背景过渡和 v0.5.3 的实测落点
 - 31 个单元测试，flutter analyze 无 error / warning
 
 发布状态
 --------
-- 本地已 commit + tag `v0.5.2`。
-- GitHub v0.5.2 已发布，Release 资产 `zhengtu-shouzha-v0.5.2.apk`。
-- 发布方式：Git Data API 上传最新提交，再创建 tag / Release。
+- 本地测试已通过（手机 + 模拟器）。
+- 发布流程：commit / tag `v0.5.6` → push `main` → GitHub Release + APK。
 
 环境
 ----
@@ -42,4 +40,4 @@ Gradle 9.3.1 / AGP 9.1.0
 
 安装
 ----
-adb install -r 征途手札-v0.5.2.apk
+adb install -r 征途手札-v0.5.6.apk

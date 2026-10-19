@@ -6,6 +6,7 @@ import '../core/theme.dart';
 import '../state/app_store.dart';
 import '../widgets/common.dart';
 import '../widgets/compass_mark.dart';
+import 'launch/launch_targets.dart';
 import 'shell.dart';
 
 class OnboardingPage extends StatefulWidget {
@@ -113,7 +114,13 @@ class _OnboardingPageState extends State<OnboardingPage> {
                       children: [
                         Row(
                           children: [
-                            CompassMark(size: 28, color: c.ink, accent: c.accent, stroke: 2.4),
+                            CompassMark(
+                              key: LaunchTargets.onboardingCompass,
+                              size: 28,
+                              color: c.ink,
+                              accent: c.accent,
+                              stroke: 2.4,
+                            ),
                             const SizedBox(width: 10),
                             Text(
                               'ZHENGTU · SHOUZHA',
