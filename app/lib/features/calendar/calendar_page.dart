@@ -54,8 +54,9 @@ class _CalendarPageState extends State<CalendarPage> {
     final monthRecordDays = <String>{...diaryDates, ...taskDates, ...expenseDates}.length;
     final diary = store.diaryForDay(_selected);
     final tasks = store.tasksCompletedOn(_selected);
-    final expenses = store.expensesOn(_selected);
+    final expenses = store.entriesOn(_selected);
     final dayTotal = store.expenseTotalOn(_selected);
+    final dayIncome = store.incomeTotalOn(_selected);
     final isFuture = dateOnly(_selected).isAfter(today());
 
     return Scaffold(
@@ -199,7 +200,7 @@ class _CalendarPageState extends State<CalendarPage> {
                       const SizedBox(width: 14),
                       _LegendDot(color: c.moss, label: '完成任务'),
                       const SizedBox(width: 14),
-                      _LegendDot(color: c.terra, label: '开支'),
+                      _LegendDot(color: c.terra, label: '账目'),
                     ],
                   ),
                 ],
@@ -212,6 +213,7 @@ class _CalendarPageState extends State<CalendarPage> {
               tasks: tasks,
               expenses: expenses,
               total: dayTotal,
+              income: dayIncome,
               isFuture: isFuture,
               onOpenDetail: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => DayDetailPage(day: _selected)),
@@ -405,6 +407,7 @@ class _SelectedDayCard extends StatelessWidget {
     required this.tasks,
     required this.expenses,
     required this.total,
+    required this.income,
     required this.isFuture,
     required this.onOpenDetail,
     required this.onWriteDiary,
@@ -416,6 +419,7 @@ class _SelectedDayCard extends StatelessWidget {
   final List<TaskItem> tasks;
   final List<Expense> expenses;
   final double total;
+  final double income;
   final bool isFuture;
   final VoidCallback onOpenDetail;
   final VoidCallback onWriteDiary;
@@ -568,7 +572,7 @@ class _SelectedDayCard extends StatelessWidget {
                   Icon(Icons.account_balance_wallet_outlined, size: 14, color: c.terra),
                   const SizedBox(width: 7),
                   Text(
-                    '支出 ${money(total)} · ${expenses.length} 笔',
+                    '支出 ${money(total)}${income > 0 ? ' · 收入 ${money(income)}' : ''} · ${expenses.length} 笔',
                     style: AppText.sans(size: 10.5, weight: FontWeight.w600, color: c.terra),
                   ),
                   const SizedBox(width: 8),
@@ -601,7 +605,7 @@ class _MonthSummary extends StatelessWidget {
     final c = context.colors;
     final diaryCount = store.diaryDatesInMonth(month).length;
     final taskCount = store.monthDoneCount(month);
-    final expenseCount = store.expensesInMonth(month).length;
+    final entryCount = store.entriesInMonth(month).length;
     return PaperCard(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       elevated: false,
@@ -621,8 +625,8 @@ class _MonthSummary extends StatelessWidget {
               ),
               Expanded(
                 child: StatBlock(
-                  value: '$expenseCount',
-                  label: '开销 / 笔',
+                  value: '$entryCount',
+                  label: '账目 / 笔',
                   tone: c.terra,
                 ),
               ),

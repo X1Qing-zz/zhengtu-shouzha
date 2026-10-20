@@ -115,15 +115,17 @@ class HomePage extends StatelessWidget {
                 _DiaryPreviewCard(entry: diary, onTap: () => _openDiary(context, diary)),
               const SizedBox(height: 26),
               SectionHeading(
-                eyebrow: 'EXPENSES',
-                title: '今日开销',
+                eyebrow: 'LEDGER',
+                title: '今日收支',
                 actionLabel: '账本',
                 onAction: () => onNavigate(3),
               ),
               const SizedBox(height: 12),
               _ExpenseCard(
                 total: store.todayExpenseTotal,
+                income: store.todayIncomeTotal,
                 count: store.expensesOn(now).length,
+                incomeCount: store.incomesOn(now).length,
                 monthTotal: store.monthExpenseTotal(now),
                 series: store.dailyExpenseTotals(now, 7),
                 onTap: () => onNavigate(3),
@@ -1110,7 +1112,9 @@ class _DiaryPreviewCard extends StatelessWidget {
 class _ExpenseCard extends StatelessWidget {
   const _ExpenseCard({
     required this.total,
+    required this.income,
     required this.count,
+    required this.incomeCount,
     required this.monthTotal,
     required this.series,
     required this.onTap,
@@ -1118,7 +1122,9 @@ class _ExpenseCard extends StatelessWidget {
   });
 
   final double total;
+  final double income;
   final int count;
+  final int incomeCount;
   final double monthTotal;
   final List<double> series;
   final VoidCallback onTap;
@@ -1141,7 +1147,7 @@ class _ExpenseCard extends StatelessWidget {
                   children: [
                     Text('今天', style: AppText.sans(size: 10.5, color: c.muted)),
                     const SizedBox(width: 6),
-                    Text('${count} 笔', style: AppText.sans(size: 10.5, color: c.muted.withValues(alpha: 0.7))),
+                    Text('${count + incomeCount} 笔', style: AppText.sans(size: 10.5, color: c.muted.withValues(alpha: 0.7))),
                   ],
                 ),
                 const SizedBox(height: 5),
@@ -1151,8 +1157,17 @@ class _ExpenseCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 5),
                 Text(
-                  '本月 ${money(monthTotal)}',
-                  style: AppText.sans(size: 11, color: c.muted),
+                  '收入 ${money(income)} · 结余 ${money(income - total)}',
+                  style: AppText.sans(
+                    size: 10.5,
+                    weight: FontWeight.w500,
+                    color: income > 0 ? c.moss : c.muted,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '本月支出 ${money(monthTotal)}',
+                  style: AppText.sans(size: 10.5, color: c.muted),
                 ),
                 const SizedBox(height: 12),
                 GestureDetector(

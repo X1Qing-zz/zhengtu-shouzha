@@ -1,4 +1,4 @@
-# 征途手札 · Zhengtu Shouzha · v0.5.6
+# 征途手札 · Zhengtu Shouzha · v0.5.7
 
 > 记录「大世界（地球 Online）冒险生活」的移动端手札。
 > 把日常写成一场冒险：日记、任务、账本、天气，以及一点恰到好处的谏言。
@@ -11,7 +11,7 @@
 
 - **手札**：一天一篇，自由文本 + 最多 9 张照片 + 心情 + 标题，自动按日期归档。
 - **任务**：主线 / 支线、优先级、截止日期、完成时间戳；日历按「完成时间」聚合。
-- **账本**：金额 + 固定分类 + 备注 + 时间；月度总览、分类占比、近 7 天节奏。
+- **账本**：支出 / 收入双类型，金额 + 分类 + 备注 + 时间；月度支出、收入、结余、分类占比、近 7 天节奏。
 - **天气**：Open-Meteo 免费数据，支持当前定位或手动城市，当天缓存，生成出行建议。
 - **日历**：点任意日期，聚合当天手札、完成的任务和开支。
 - **谏言**：每日一句，可手动换一句。
@@ -125,7 +125,7 @@ Gradle 发行版使用腾讯云镜像。如果网络环境不同，可以改回�
 
 **tasks**：`id, title, note, type(main/side), priority(high/medium/low), due_date, done, completed_at, created_at`
 
-**expenses**：`id, amount, category, note, spent_at, created_at`
+**expenses**：`id, amount, category, note, spent_at, created_at, is_income`（`is_income=1` 为收入）
 
 **weather_cache**：`date(主键), payload(JSON), updated_at`
 

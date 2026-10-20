@@ -271,13 +271,24 @@ class AppStore extends ChangeNotifier {
       ..sort((a, b) => (a.completedAt ?? a.createdAt).compareTo(b.completedAt ?? b.createdAt));
   }
 
-  List<Expense> expensesOn(DateTime day) {
+  List<Expense> entriesOn(DateTime day) {
     return _expenses.where((e) => isSameDay(e.spentAt, day)).toList()
       ..sort((a, b) => b.spentAt.compareTo(a.spentAt));
   }
 
+  List<Expense> expensesOn(DateTime day) =>
+      entriesOn(day).where((e) => !e.isIncome).toList();
+
+  List<Expense> incomesOn(DateTime day) =>
+      entriesOn(day).where((e) => e.isIncome).toList();
+
   double expenseTotalOn(DateTime day) =>
       expensesOn(day).fold(0, (sum, e) => sum + e.amount);
+
+  double incomeTotalOn(DateTime day) =>
+      incomesOn(day).fold(0, (sum, e) => sum + e.amount);
+
+  double netTotalOn(DateTime day) => incomeTotalOn(day) - expenseTotalOn(day);
 
   List<TaskItem> get todayTasks {
     final day = today();
@@ -337,23 +348,48 @@ class AppStore extends ChangeNotifier {
     return dates.length;
   }
 
-  List<Expense> expensesInMonth(DateTime month) {
+  List<Expense> entriesInMonth(DateTime month) {
     return _expenses
         .where((e) => e.spentAt.year == month.year && e.spentAt.month == month.month)
         .toList();
   }
 
+  List<Expense> expensesInMonth(DateTime month) =>
+      entriesInMonth(month).where((e) => !e.isIncome).toList();
+
+  List<Expense> incomesInMonth(DateTime month) =>
+      entriesInMonth(month).where((e) => e.isIncome).toList();
+
   double monthExpenseTotal(DateTime month) =>
       expensesInMonth(month).fold(0, (sum, e) => sum + e.amount);
 
+  double monthIncomeTotal(DateTime month) =>
+      incomesInMonth(month).fold(0, (sum, e) => sum + e.amount);
+
+  double monthNetTotal(DateTime month) =>
+      monthIncomeTotal(month) - monthExpenseTotal(month);
+
   double get todayExpenseTotal => expenseTotalOn(today());
+
+  double get todayIncomeTotal => incomeTotalOn(today());
+
+  double get todayNetTotal => netTotalOn(today());
 
   double get weekExpenseTotal {
     final start = startOfWeek(today());
     return _expenses
-        .where((e) => !e.spentAt.isBefore(start))
+        .where((e) => !e.isIncome && !e.spentAt.isBefore(start))
         .fold(0, (sum, e) => sum + e.amount);
   }
+
+  double get weekIncomeTotal {
+    final start = startOfWeek(today());
+    return _expenses
+        .where((e) => e.isIncome && !e.spentAt.isBefore(start))
+        .fold(0, (sum, e) => sum + e.amount);
+  }
+
+  double get weekNetTotal => weekIncomeTotal - weekExpenseTotal;
 
   List<CategoryTotal> categoryTotals(DateTime month) {
     final totals = <String, double>{};
@@ -405,7 +441,7 @@ class AppStore extends ChangeNotifier {
   bool hasRecordsOn(DateTime day) =>
       diaryForDay(day) != null ||
       tasksCompletedOn(day).isNotEmpty ||
-      expensesOn(day).isNotEmpty;
+      entriesOn(day).isNotEmpty;
 
   // ---------------------------------------------------------------------------
   // Diary
@@ -704,6 +740,7 @@ class AppStore extends ChangeNotifier {
     }
 
     final expenses = <Expense>[
+      Expense(amount: 6500, category: '工资', note: '本月实习工资', spentAt: at(1, 10, 0), createdAt: at(1, 10, 5), isIncome: true),
       Expense(amount: 28.5, category: '餐饮', note: '楼下的牛肉面', spentAt: at(0, 12, 20), createdAt: at(0, 12, 25)),
       Expense(amount: 4, category: '交通', note: '地铁 2 号线', spentAt: at(0, 8, 40), createdAt: at(0, 8, 45)),
       Expense(amount: 129, category: '购物', note: '一束洋桔梗', spentAt: at(0, 18, 10), createdAt: at(0, 18, 12)),

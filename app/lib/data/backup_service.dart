@@ -62,7 +62,7 @@ class RestoreResult {
 
 class BackupService {
   static const String appId = 'zhengtu_shouzha';
-  static const int formatVersion = 1;
+  static const int formatVersion = 2;
 
   Future<File> export({
     required List<DiaryEntry> diaries,
