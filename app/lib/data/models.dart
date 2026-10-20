@@ -234,6 +234,7 @@ class Expense {
     this.note = '',
     required this.spentAt,
     required this.createdAt,
+    this.isIncome = false,
   });
 
   final int? id;
@@ -242,10 +243,13 @@ class Expense {
   final String note;
   final DateTime spentAt;
   final DateTime createdAt;
+  final bool isIncome;
 
-  ExpenseCategory get meta => categoryByName(category);
+  ExpenseCategory get meta => categoryByName(category, income: isIncome);
 
   String get displayNote => note.trim().isEmpty ? category : note.trim();
+
+  double get signedAmount => isIncome ? amount : -amount;
 
   Expense copyWith({
     int? id,
@@ -254,6 +258,7 @@ class Expense {
     String? note,
     DateTime? spentAt,
     DateTime? createdAt,
+    bool? isIncome,
   }) {
     return Expense(
       id: id ?? this.id,
@@ -262,6 +267,7 @@ class Expense {
       note: note ?? this.note,
       spentAt: spentAt ?? this.spentAt,
       createdAt: createdAt ?? this.createdAt,
+      isIncome: isIncome ?? this.isIncome,
     );
   }
 
@@ -272,6 +278,7 @@ class Expense {
         'note': note,
         'spent_at': spentAt.toIso8601String(),
         'created_at': createdAt.toIso8601String(),
+        'is_income': isIncome ? 1 : 0,
       };
 
   factory Expense.fromMap(Map<String, Object?> map) => Expense(
@@ -281,6 +288,9 @@ class Expense {
         note: map['note'] as String? ?? '',
         spentAt: parseDate(map['spent_at'] as String? ?? ''),
         createdAt: parseDate(map['created_at'] as String? ?? ''),
+        isIncome: map['is_income'] == 1 ||
+            map['is_income'] == true ||
+            map['type'] == 'income',
       );
 }
 
@@ -305,10 +315,24 @@ const List<ExpenseCategory> kExpenseCategories = [
   ExpenseCategory('其他', Icons.more_horiz, Color(0xFF8C8272)),
 ];
 
-ExpenseCategory categoryByName(String name) {
-  return kExpenseCategories.firstWhere(
+const List<ExpenseCategory> kIncomeCategories = [
+  ExpenseCategory('工资', Icons.account_balance_wallet_outlined, Color(0xFF6F8F6A)),
+  ExpenseCategory('奖金', Icons.emoji_events_outlined, Color(0xFFC7A64A)),
+  ExpenseCategory('兼职', Icons.work_outline_rounded, Color(0xFF6B8A9A)),
+  ExpenseCategory('投资', Icons.trending_up_rounded, Color(0xFF7C6A9E)),
+  ExpenseCategory('红包', Icons.redeem_outlined, Color(0xFFC2703F)),
+  ExpenseCategory('报销', Icons.receipt_long_outlined, Color(0xFF8A7F5C)),
+  ExpenseCategory('其他', Icons.more_horiz, Color(0xFF8C8272)),
+];
+
+List<ExpenseCategory> categoriesFor({required bool income}) =>
+    income ? kIncomeCategories : kExpenseCategories;
+
+ExpenseCategory categoryByName(String name, {bool income = false}) {
+  final categories = categoriesFor(income: income);
+  return categories.firstWhere(
     (e) => e.name == name,
-    orElse: () => kExpenseCategories.last,
+    orElse: () => categories.last,
   );
 }
 

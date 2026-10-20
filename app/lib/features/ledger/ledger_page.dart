@@ -33,8 +33,12 @@ class _LedgerPageState extends State<LedgerPage> {
   Widget build(BuildContext context) {
     final store = context.watch<AppStore>();
     final c = context.colors;
+    final entries = store.entriesInMonth(_month);
     final expenses = store.expensesInMonth(_month);
+    final incomes = store.incomesInMonth(_month);
     final total = store.monthExpenseTotal(_month);
+    final incomeTotal = store.monthIncomeTotal(_month);
+    final netTotal = store.monthNetTotal(_month);
     final categories = store.categoryTotals(_month);
     final previous = DateTime(_month.year, _month.month - 1);
     final previousTotal = store.monthExpenseTotal(previous);
@@ -53,9 +57,9 @@ class _LedgerPageState extends State<LedgerPage> {
         : chartValues.indexWhere((v) => v == chartValues.reduce((a, b) => a > b ? a : b));
 
     final dayGroups = <String, List<Expense>>{};
-    for (final expense in expenses) {
-      final key = ymd(dateOnly(expense.spentAt));
-      dayGroups.putIfAbsent(key, () => []).add(expense);
+    for (final entry in entries) {
+      final key = ymd(dateOnly(entry.spentAt));
+      dayGroups.putIfAbsent(key, () => []).add(entry);
     }
     final dayKeys = dayGroups.keys.toList()..sort((a, b) => b.compareTo(a));
 
@@ -89,7 +93,7 @@ class _LedgerPageState extends State<LedgerPage> {
             Text('日常账本', style: AppText.serifStyle(size: 32, color: c.ink, letterSpacing: 2)),
             const SizedBox(height: 8),
             Text(
-              '记录每一枚硬币的去向 · 本周 ${money(store.weekExpenseTotal)}',
+              '记录每一笔进出 · 本周支出 ${money(store.weekExpenseTotal)} · 收入 ${money(store.weekIncomeTotal)}',
               style: AppText.sans(size: 12, color: c.muted, letterSpacing: 0.3),
             ),
             const SizedBox(height: 22),
@@ -149,8 +153,28 @@ class _LedgerPageState extends State<LedgerPage> {
                       Padding(
                         padding: const EdgeInsets.only(bottom: 5),
                         child: Text(
-                          '${expenses.length} 笔支出',
+                          '${expenses.length} 笔支出 · ${incomes.length} 笔收入',
                           style: AppText.sans(size: 11, color: c.muted),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 7),
+                  Row(
+                    children: [
+                      Text(
+                        '收入 ${money(incomeTotal)}',
+                        style: AppText.sans(size: 11, weight: FontWeight.w500, color: c.moss),
+                      ),
+                      const SizedBox(width: 10),
+                      Container(width: 3, height: 3, decoration: BoxDecoration(color: c.muted, shape: BoxShape.circle)),
+                      const SizedBox(width: 10),
+                      Text(
+                        '结余 ${money(netTotal)}',
+                        style: AppText.sans(
+                          size: 11,
+                          weight: FontWeight.w600,
+                          color: netTotal < 0 ? c.terra : c.inkSoft,
                         ),
                       ),
                     ],
@@ -316,9 +340,9 @@ class _LedgerPageState extends State<LedgerPage> {
             const SizedBox(height: 24),
             SectionHeading(
               eyebrow: 'Details',
-              title: '支出明细',
+              title: '账目明细',
               action: Text(
-                '${expenses.length} 笔',
+                '${entries.length} 笔',
                 style: AppText.sans(size: 11, color: c.muted),
               ),
             ),
@@ -327,7 +351,7 @@ class _LedgerPageState extends State<LedgerPage> {
               EmptyState(
                 icon: Icons.account_balance_wallet_outlined,
                 title: '这个月还没有账目',
-                message: '一杯咖啡、一趟地铁，\n记下来，才知道钱都去了哪里。',
+                message: '工资、奖金、一杯咖啡、一趟地铁，\n记下来，才知道钱都去了哪里。',
                 actionLabel: '记下第一笔',
                 onAction: () => showExpenseEditor(context),
               )
@@ -335,7 +359,12 @@ class _LedgerPageState extends State<LedgerPage> {
               for (final key in dayKeys) ...[
                 _DayGroupHeader(
                   day: parseDate(key),
-                  total: dayGroups[key]!.fold(0, (sum, e) => sum + e.amount),
+                  expenseTotal: dayGroups[key]!
+                      .where((entry) => !entry.isIncome)
+                      .fold(0, (sum, entry) => sum + entry.amount),
+                  incomeTotal: dayGroups[key]!
+                      .where((entry) => entry.isIncome)
+                      .fold(0, (sum, entry) => sum + entry.amount),
                   count: dayGroups[key]!.length,
                 ),
                 const SizedBox(height: 8),
@@ -483,10 +512,16 @@ class _EmptyCategories extends StatelessWidget {
 }
 
 class _DayGroupHeader extends StatelessWidget {
-  const _DayGroupHeader({required this.day, required this.total, required this.count});
+  const _DayGroupHeader({
+    required this.day,
+    required this.expenseTotal,
+    required this.incomeTotal,
+    required this.count,
+  });
 
   final DateTime day;
-  final double total;
+  final double expenseTotal;
+  final double incomeTotal;
   final int count;
 
   @override
@@ -502,9 +537,16 @@ class _DayGroupHeader extends StatelessWidget {
         Text('$count 笔', style: AppText.sans(size: 9.5, color: c.muted)),
         const Spacer(),
         Text(
-          '支出 ${money(total)}',
+          '支出 ${money(expenseTotal)}',
           style: AppText.sans(size: 10.5, weight: FontWeight.w500, color: c.inkSoft),
         ),
+        if (incomeTotal > 0) ...[
+          const SizedBox(width: 7),
+          Text(
+            '收入 ${money(incomeTotal)}',
+            style: AppText.sans(size: 10.5, weight: FontWeight.w500, color: c.moss),
+          ),
+        ],
       ],
     );
   }
@@ -556,8 +598,12 @@ class _ExpenseRow extends StatelessWidget {
               ),
             ),
             Text(
-              '-${money(expense.amount)}',
-              style: AppText.displayStyle(size: 19, color: c.ink, letterSpacing: -0.3),
+              '${expense.isIncome ? '+' : '-'}${money(expense.amount)}',
+              style: AppText.displayStyle(
+                size: 19,
+                color: expense.isIncome ? c.moss : c.ink,
+                letterSpacing: -0.3,
+              ),
             ),
           ],
         ),

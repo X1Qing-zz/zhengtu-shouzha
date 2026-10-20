@@ -70,6 +70,14 @@ void main() {
         createdAt: DateTime(2026, 10, 12, 19),
       ),
       Expense(
+        amount: 5000,
+        category: '工资',
+        note: '本周工资',
+        spentAt: DateTime(2026, 10, 13, 10),
+        createdAt: DateTime(2026, 10, 13, 10),
+        isIncome: true,
+      ),
+      Expense(
         amount: 50,
         category: '交通',
         note: '地铁',

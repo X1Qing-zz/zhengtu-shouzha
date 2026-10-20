@@ -26,6 +26,7 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
   late final TextEditingController _amountController;
   late final TextEditingController _noteController;
   late String _category;
+  late bool _isIncome;
   late DateTime _spentAt;
   late DateTime _createdAt;
   bool _saving = false;
@@ -34,13 +35,25 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
   void initState() {
     super.initState();
     final expense = widget.expense;
+    _isIncome = expense?.isIncome ?? false;
     _amountController = TextEditingController(
       text: expense == null ? '' : amountInput(expense.amount),
     );
     _noteController = TextEditingController(text: expense?.note ?? '');
-    _category = expense?.category ?? kExpenseCategories.first.name;
+    _category = expense?.category ?? categoriesFor(income: _isIncome).first.name;
     _spentAt = expense?.spentAt ?? DateTime.now();
     _createdAt = expense?.createdAt ?? DateTime.now();
+  }
+
+  void _setIncome(bool value) {
+    if (_isIncome == value) return;
+    setState(() {
+      _isIncome = value;
+      final categories = categoriesFor(income: value);
+      if (!categories.any((category) => category.name == _category)) {
+        _category = categories.first.name;
+      }
+    });
   }
 
   @override
@@ -108,6 +121,7 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
       note: _noteController.text.trim(),
       spentAt: _spentAt,
       createdAt: _createdAt,
+      isIncome: _isIncome,
     );
     try {
       await store.saveExpense(expense);
@@ -139,14 +153,39 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
   Widget build(BuildContext context) {
     final c = context.colors;
     final isEditing = widget.expense != null;
+    final categories = categoriesFor(income: _isIncome);
     return AppSheet(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SheetHeader(
             title: isEditing ? '编辑这笔' : '记一笔',
-            subtitle: '钱花在哪里，日子就长成什么样',
+            subtitle: '记录每一笔进出，日子更有数',
             onClose: () => Navigator.of(context).pop(),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _EntryTypeTab(
+                  label: '支出',
+                  icon: Icons.north_east_rounded,
+                  color: c.terra,
+                  selected: !_isIncome,
+                  onTap: () => _setIncome(false),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _EntryTypeTab(
+                  label: '收入',
+                  icon: Icons.south_west_rounded,
+                  color: c.moss,
+                  selected: _isIncome,
+                  onTap: () => _setIncome(true),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
           Row(
@@ -207,7 +246,7 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             padding: EdgeInsets.zero,
-            itemCount: kExpenseCategories.length,
+            itemCount: categories.length,
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 5,
               mainAxisSpacing: 8,
@@ -215,7 +254,7 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
               childAspectRatio: 0.78,
             ),
             itemBuilder: (context, index) {
-              final category = kExpenseCategories[index];
+              final category = categories[index];
               final selected = category.name == _category;
               return GestureDetector(
                 onTap: () => setState(() => _category = category.name),
@@ -269,7 +308,7 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
             style: AppText.sans(size: 13.5, color: c.ink),
             decoration: fieldDecoration(
               context,
-              hint: '买了什么？（可选）',
+              hint: _isIncome ? '这笔收入来自哪里？（可选）' : '买了什么？（可选）',
               prefix: Icon(Icons.edit_outlined, size: 17, color: c.muted),
             ),
           ),
@@ -310,6 +349,59 @@ class _ExpenseEditorSheetState extends State<ExpenseEditorSheet> {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+class _EntryTypeTab extends StatelessWidget {
+  const _EntryTypeTab({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeOutCubic,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: c.isDark ? 0.22 : 0.12) : Colors.transparent,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? color.withValues(alpha: 0.45) : c.line,
+            width: 0.8,
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 15, color: selected ? color : c.muted),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: AppText.sans(
+                size: 12.5,
+                weight: selected ? FontWeight.w600 : FontWeight.w500,
+                color: selected ? c.ink : c.muted,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

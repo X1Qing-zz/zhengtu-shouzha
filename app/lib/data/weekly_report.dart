@@ -109,11 +109,13 @@ WeeklyReport buildWeeklyReport({
   final weekTasks = tasks
       .where((task) => task.done && task.completedAt != null && inWeek(task.completedAt!))
       .toList();
-  final weekExpenses = expenses.where((expense) => inWeek(expense.spentAt)).toList();
+  final weekEntries = expenses.where((expense) => inWeek(expense.spentAt)).toList();
+  final weekExpenses = weekEntries.where((expense) => !expense.isIncome).toList();
 
   final previousStart = weekStart.subtract(const Duration(days: 7));
   final previousExpenseTotal = expenses
       .where((expense) {
+        if (expense.isIncome) return false;
         final day = dateOnly(expense.spentAt);
         return !day.isBefore(previousStart) && day.isBefore(weekStart);
       })
@@ -149,7 +151,7 @@ WeeklyReport buildWeeklyReport({
   final activeDates = <String>{
     ...weekDiaries.map((entry) => ymd(entry.date)),
     ...weekTasks.map((task) => ymd(task.completedAt!)),
-    ...weekExpenses.map((expense) => ymd(expense.spentAt)),
+    ...weekEntries.map((expense) => ymd(expense.spentAt)),
   };
 
   Expense? biggestExpense;

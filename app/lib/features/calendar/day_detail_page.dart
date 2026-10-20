@@ -38,9 +38,10 @@ class _DayDetailPageState extends State<DayDetailPage> {
     final c = context.colors;
     final diary = store.diaryForDay(_day);
     final tasks = store.tasksCompletedOn(_day);
-    final expenses = store.expensesOn(_day);
+    final entries = store.entriesOn(_day);
     final total = store.expenseTotalOn(_day);
-    final hasAny = diary != null || tasks.isNotEmpty || expenses.isNotEmpty;
+    final income = store.incomeTotalOn(_day);
+    final hasAny = diary != null || tasks.isNotEmpty || entries.isNotEmpty;
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -128,9 +129,9 @@ class _DayDetailPageState extends State<DayDetailPage> {
                   Container(width: 0.8, height: 32, color: c.line),
                   Expanded(
                     child: _DayStat(
-                      value: money(total),
-                      label: '当天支出',
-                      color: c.terra,
+                      value: money(income - total),
+                      label: '当天结余',
+                      color: income >= total ? c.moss : c.terra,
                       icon: Icons.account_balance_wallet_outlined,
                     ),
                   ),
@@ -284,24 +285,27 @@ class _DayDetailPageState extends State<DayDetailPage> {
               ),
             const SizedBox(height: 26),
             SectionHeading(
-              eyebrow: 'Expenses',
-              title: '当天的开销',
-              action: expenses.isEmpty
+              eyebrow: 'Ledger',
+              title: '当天的账目',
+              action: entries.isEmpty
                   ? null
-                  : Text(money(total), style: AppText.displayStyle(size: 20, color: c.terra)),
+                  : Text(
+                      '支出 ${money(total)}${income > 0 ? ' · 收入 ${money(income)}' : ''}',
+                      style: AppText.displayStyle(size: 17, color: c.terra),
+                    ),
             ),
             const SizedBox(height: 10),
-            if (expenses.isEmpty)
+            if (entries.isEmpty)
               _QuietRow(
                 icon: Icons.account_balance_wallet_outlined,
-                text: '这一天没有开销记录',
+                text: '这一天没有账目记录',
               )
             else
               PaperCard(
                 padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                 child: Column(
                   children: [
-                    for (var i = 0; i < expenses.length; i++) ...[
+                    for (var i = 0; i < entries.length; i++) ...[
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Row(
@@ -310,35 +314,39 @@ class _DayDetailPageState extends State<DayDetailPage> {
                               width: 32,
                               height: 32,
                               decoration: BoxDecoration(
-                                color: expenses[i].meta.color.withValues(alpha: 0.12),
+                                color: entries[i].meta.color.withValues(alpha: 0.12),
                                 shape: BoxShape.circle,
                               ),
                               child: Icon(
-                                expenses[i].meta.icon,
+                                entries[i].meta.icon,
                                 size: 15,
-                                color: expenses[i].meta.color,
+                                color: entries[i].meta.color,
                               ),
                             ),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
-                                expenses[i].displayNote,
+                                entries[i].displayNote,
                                 style: AppText.sans(size: 13, color: c.ink),
                               ),
                             ),
                             Text(
-                              timeHm(expenses[i].spentAt),
+                              timeHm(entries[i].spentAt),
                               style: AppText.sans(size: 9.5, color: c.muted),
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              money(expenses[i].amount),
-                              style: AppText.sans(size: 12.5, weight: FontWeight.w600, color: c.ink),
+                              '${entries[i].isIncome ? '+' : '-'}${money(entries[i].amount)}',
+                              style: AppText.sans(
+                                size: 12.5,
+                                weight: FontWeight.w600,
+                                color: entries[i].isIncome ? c.moss : c.ink,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                      if (i != expenses.length - 1)
+                      if (i != entries.length - 1)
                         Divider(height: 1, color: c.line.withValues(alpha: 0.5)),
                     ],
                   ],
@@ -350,7 +358,7 @@ class _DayDetailPageState extends State<DayDetailPage> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    _summary(diary, tasks, total),
+                    _summary(diary, tasks, total, income),
                     textAlign: TextAlign.center,
                     style: AppText.serifStyle(
                       size: 13,
@@ -368,11 +376,12 @@ class _DayDetailPageState extends State<DayDetailPage> {
     );
   }
 
-  String _summary(DiaryEntry? diary, List<TaskItem> tasks, double total) {
+  String _summary(DiaryEntry? diary, List<TaskItem> tasks, double total, double income) {
     final pieces = <String>[];
     if (diary != null) pieces.add('写下了 ${diary.charCount} 个字');
     if (tasks.isNotEmpty) pieces.add('完成了 ${tasks.length} 件任务');
     if (total > 0) pieces.add('花了 ${money(total)}');
+    if (income > 0) pieces.add('收入 ${money(income)}');
     if (pieces.isEmpty) return '平凡的一天，也值得被记住。';
     return '这一天，你${pieces.join('，')}。\n每一步，都算数。';
   }

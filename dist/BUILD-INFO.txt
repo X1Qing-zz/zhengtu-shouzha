@@ -1,25 +1,26 @@
-征途手札 v0.5.6 · Android APK（本地测试包）
+征途手札 v0.5.7 · Android APK（本地测试包）
 ================================================
 
 应用名称：征途手札
 包名：com.zhengtu.shouzha
-版本：0.5.6 (versionCode 12)
-构建日期：2026-10-19
+版本：0.5.7 (versionCode 13)
+构建日期：2026-10-20
 构建类型：Release（universal APK，含 arm64-v8a / armeabi-v7a / x86_64）
 签名：当前使用 Flutter 模板的 debug 签名，仅供安装体验，上架前需替换为正式签名。
-SHA256：97D79E8406E49D061055F6B8365D0A0DA64B777BAF0A14E0EF45159719375351
+SHA256：90ACC56655E0E80F5E7ADE048D0D9BB9D2B61236C66B086A5226211CE2E6B051
 
-本版重点：罗盘柔和渐显
-------------------------
-- 罗盘出现改为约 900ms 的柔和渐显（淡入）
-- 带 0.92 → 1 的轻微放大，不再突然出现
-- 保留 v0.5.5 的约 950ms 背景过渡和 v0.5.3 的实测落点
-- 31 个单元测试，flutter analyze 无 error / warning
+本版重点：账本收入
+--------------------
+- 记账新增「支出 / 收入」切换和收入分类
+- 月度显示支出、收入、结余；明细用 +/- 和颜色区分
+- 首页、日历、当天详情同步显示收入
+- 数据库 v2 新增 is_income；旧记录 / 旧备份默认按支出读取
+- 周报只统计支出，避免把收入算进支出
+- 34 个单元测试，flutter analyze 无 error / warning
 
 发布状态
 --------
-- 本地测试已通过（手机 + 模拟器）。
-- 发布流程：commit / tag `v0.5.6` → push `main` → GitHub Release + APK。
+- 本地测试已通过；发布流程：commit / tag `v0.5.7` → push GitHub → Release + APK。
 
 环境
 ----
@@ -40,4 +41,4 @@ Gradle 9.3.1 / AGP 9.1.0
 
 安装
 ----
-adb install -r 征途手札-v0.5.6.apk
+adb install -r 征途手札-v0.5.7.apk
