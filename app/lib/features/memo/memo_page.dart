@@ -385,15 +385,6 @@ class _MemoPageState extends State<MemoPage> with AutomaticKeepAliveClientMixin 
               ),
             ],
           ),
-          const SizedBox(height: 7),
-          Text(
-            '不落盘。只在本次打开期间存在；想留下，就带走一张卡片或一份 TXT。',
-            style: AppText.sans(
-              size: 10.8,
-              color: c.inkSoft.withValues(alpha: 0.85),
-              height: 1.7,
-            ),
-          ),
         ],
       ),
     );
