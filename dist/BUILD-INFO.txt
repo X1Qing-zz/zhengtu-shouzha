@@ -23,7 +23,9 @@ SHA256：E3279C4749CF1A3B6892C06048198C8F685A5C4B7051D9FF39CDC61829318E93
 发布状态
 --------
 - 已完成本地构建、安装与截图验收。
-- 按用户要求，本轮只做本地 commit / tag，不 push、不发 GitHub Release；GitHub 仍为 v0.5.7。
+- 已推送 GitHub；Release 与 APK 已发布：
+  https://github.com/X1Qing-zz/zhengtu-shouzha/releases/tag/v0.6.1
+- GitHub main 包含 v0.6.1 源码；tag / Release 为 `v0.6.1`。
 
 环境
 ----
