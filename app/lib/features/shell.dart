@@ -9,6 +9,7 @@ import 'calendar/calendar_page.dart';
 import 'diary/diary_page.dart';
 import 'home/home_page.dart';
 import 'ledger/ledger_page.dart';
+import 'memo/memo_page.dart';
 import 'tasks/tasks_page.dart';
 
 class RootShell extends StatefulWidget {
@@ -20,7 +21,8 @@ class RootShell extends StatefulWidget {
 
 class _RootShellState extends State<RootShell> {
   int _index = 0;
-  late final PageController _pageController = PageController();
+  bool _memoOpen = false;
+  late final PageController _pageController = PageController(initialPage: 1);
 
   @override
   void dispose() {
@@ -29,46 +31,70 @@ class _RootShellState extends State<RootShell> {
   }
 
   void _select(int index) {
-    if (index == _index) return;
+    if (index == _index && !_memoOpen) return;
+    FocusManager.instance.primaryFocus?.unfocus();
     HapticFeedback.selectionClick();
-    setState(() => _index = index);
+    setState(() {
+      _index = index;
+      _memoOpen = false;
+    });
     _pageController.animateToPage(
-      index,
+      index + 1,
       duration: const Duration(milliseconds: 320),
       curve: Curves.easeOutCubic,
     );
   }
 
-  void _onPageChanged(int index) {
-    if (index == _index) return;
+  void _onPageChanged(int page) {
+    if (page == 0) {
+      if (_memoOpen) return;
+      HapticFeedback.selectionClick();
+      setState(() => _memoOpen = true);
+      return;
+    }
+
+    final index = page - 1;
+    if (index == _index && !_memoOpen) return;
+    FocusManager.instance.primaryFocus?.unfocus();
     HapticFeedback.selectionClick();
-    setState(() => _index = index);
+    setState(() {
+      _index = index;
+      _memoOpen = false;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     context.watch<AppStore>();
-    return Scaffold(
-      extendBody: true,
-      body: Stack(
-        fit: StackFit.expand,
-        children: [
-          const SeasonBackdrop(),
-          PageView(
-            controller: _pageController,
-            onPageChanged: _onPageChanged,
-            physics: const BouncingScrollPhysics(),
-            children: [
-              _KeepAlivePage(child: HomePage(onNavigate: _select)),
-              const _KeepAlivePage(child: TasksPage()),
-              const _KeepAlivePage(child: DiaryPage()),
-              const _KeepAlivePage(child: LedgerPage()),
-              const _KeepAlivePage(child: CalendarPage()),
-            ],
-          ),
-        ],
+    return PopScope(
+      canPop: !_memoOpen,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && _memoOpen) _select(0);
+      },
+      child: Scaffold(
+        extendBody: true,
+        body: Stack(
+          fit: StackFit.expand,
+          children: [
+            const SeasonBackdrop(),
+            PageView(
+              controller: _pageController,
+              onPageChanged: _onPageChanged,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                _KeepAlivePage(child: MemoPage(onClose: () => _select(0))),
+                _KeepAlivePage(child: HomePage(onNavigate: _select)),
+                const _KeepAlivePage(child: TasksPage()),
+                const _KeepAlivePage(child: DiaryPage()),
+                const _KeepAlivePage(child: LedgerPage()),
+                const _KeepAlivePage(child: CalendarPage()),
+              ],
+            ),
+          ],
+        ),
+        bottomNavigationBar:
+            _memoOpen ? null : AppNavBar(index: _index, onTap: _select),
       ),
-      bottomNavigationBar: AppNavBar(index: _index, onTap: _select),
     );
   }
 }
