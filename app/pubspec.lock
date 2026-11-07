@@ -842,6 +842,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.7.12"
+  tyme:
+    dependency: "direct main"
+    description:
+      name: tyme
+      sha256: b8140d99286777dc70c41050aa6a9d68f31d1536eb4bfd9ae1a14507aacb28e5
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.1"
   typed_data:
     dependency: transitive
     description:

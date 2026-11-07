@@ -4,19 +4,38 @@ import 'package:zhengtu_shouzha/core/season.dart';
 
 void main() {
   group('season calendar', () {
-    test('maps months to four seasons', () {
-      expect(Season.of(DateTime(2026, 1, 15)), Season.winter);
-      expect(Season.of(DateTime(2026, 3, 1)), Season.spring);
-      expect(Season.of(DateTime(2026, 6, 1)), Season.summer);
-      expect(Season.of(DateTime(2026, 9, 1)), Season.autumn);
-      expect(Season.of(DateTime(2026, 12, 1)), Season.winter);
+    test('switches on the four beginnings in 2026', () {
+      expect(Season.of(DateTime(2026, 2, 3)), Season.winter);
+      expect(Season.of(DateTime(2026, 2, 4)), Season.spring);
+      expect(Season.of(DateTime(2026, 5, 4)), Season.spring);
+      expect(Season.of(DateTime(2026, 5, 5)), Season.summer);
+      expect(Season.of(DateTime(2026, 8, 6)), Season.summer);
+      expect(Season.of(DateTime(2026, 8, 7)), Season.autumn);
+      expect(Season.of(DateTime(2026, 11, 6)), Season.autumn);
+      expect(Season.of(DateTime(2026, 11, 7)), Season.winter);
+    });
+
+    test('uses each year’s actual solar-term dates', () {
+      // 2025 立春 is Feb 3; 2027 立夏 / 立秋 fall one day later than 2026.
+      expect(Season.of(DateTime(2025, 2, 2)), Season.winter);
+      expect(Season.of(DateTime(2025, 2, 3)), Season.spring);
+      expect(Season.of(DateTime(2027, 5, 5)), Season.spring);
+      expect(Season.of(DateTime(2027, 5, 6)), Season.summer);
+      expect(Season.of(DateTime(2027, 8, 7)), Season.summer);
+      expect(Season.of(DateTime(2027, 8, 8)), Season.autumn);
+    });
+
+    test('keeps the whole first day of a new season', () {
+      expect(Season.of(DateTime(2026, 11, 7, 0, 0)), Season.winter);
+      expect(Season.of(DateTime(2026, 11, 7, 23, 59)), Season.winter);
+      expect(Season.of(DateTime(2027, 11, 7, 23, 59)), Season.winter);
     });
 
     test('season labels line up with the palette', () {
       expect(seasonLabel(DateTime(2026, 4, 1)), '春日');
       expect(seasonLabel(DateTime(2026, 7, 1)), '盛夏');
       expect(seasonLabel(DateTime(2026, 10, 19)), '深秋');
-      expect(seasonLabel(DateTime(2026, 12, 1)), '凛冬');
+      expect(seasonLabel(DateTime(2026, 11, 7)), '凛冬');
     });
   });
 

@@ -1,7 +1,7 @@
 name: zhengtu_shouzha
 description: "征途手札 —— 记录大世界冒险生活的移动端手札"
 publish_to: "none"
-version: 0.6.1+15
+version: 0.7.0+16
 
 environment:
   sdk: ^3.13.0
@@ -23,6 +23,7 @@ dependencies:
   share_plus: ^13.3.1
   archive: ^4.5.2
   file_picker: ^13.1.0
+  tyme: 1.5.1
 
 dev_dependencies:
   flutter_test:

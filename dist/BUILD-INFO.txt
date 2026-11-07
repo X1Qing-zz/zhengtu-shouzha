@@ -1,31 +1,33 @@
-征途手札 v0.6.1 · Android APK（本地测试包）
+征途手札 v0.7.0 · Android APK（本地测试包）
 ================================================
 
 应用名称：征途手札
 包名：com.zhengtu.shouzha
-版本：0.6.1 (versionCode 15)
-构建日期：2026-10-27
+版本：0.7.0 (versionCode 16)
+构建日期：2026-11-07
 构建类型：Release（universal APK，含 arm64-v8a / armeabi-v7a / x86_64）
 签名：当前使用 Flutter 模板的 debug 签名，仅供安装体验，上架前需替换为正式签名。
-大小：69,520,293 bytes（66.30 MiB）
-SHA256：E3279C4749CF1A3B6892C06048198C8F685A5C4B7051D9FF39CDC61829318E93
+大小：69,782,501 bytes（66.55 MiB）
+SHA256：68115BAA0CD296DD4DCF98FC0FAC3BC07C431EAF363675658FF4373F96AC7342
 
-本版重点：勿忘页头精简
------------------------
-- 去掉「勿忘」页头那行「不落盘。只在本次打开期间存在……」的小字
-- 页头只保留「勿忘」、一句「一张只在此刻存在的纸」和日期
-- 页面更简洁，正文区域更大；功能与 v0.6.0 一致
-- 今日页向右滑进入，不占底部导航；纯色季节卡片
-- 不写 SQLite / SharedPreferences / 备份，文字只存在内存
-- 可导出季节同色 PNG 卡片（864 px 宽）和 UTF-8 TXT，走系统分享面板
-- 37 个单元测试，flutter analyze 无 error / warning
+本版重点：四立换季
+-------------------
+- 四季切换从“按月份”改为“按立春 / 立夏 / 立秋 / 立冬当天 0 点”
+- 2026 年 11 月 7 日立冬，打开即是冬季雪白 + 灰蓝配色
+- 使用 tyme 1.5.1 的离线天文节气计算，按年缓存，不维护年度日期表
+- 2025 立春 2 月 3 日、2027 立夏 5 月 6 日 / 立秋 8 月 8 日等年际差异由测试覆盖
+- 39 个单元测试，flutter analyze 无 error / warning
+
+依赖与致谢
+----------
+- tyme 1.5.1（MIT）：https://pub.dev/packages/tyme
+- 节气算法来源：寿星天文历（sxwnl），作者许剑伟
+- 本项目仅在本地调用纯 Dart 计算，不联网、不需要 API Key
 
 发布状态
 --------
-- 已完成本地构建、安装与截图验收。
-- 已推送 GitHub；Release 与 APK 已发布：
-  https://github.com/X1Qing-zz/zhengtu-shouzha/releases/tag/v0.6.1
-- GitHub main 包含 v0.6.1 源码；tag / Release 为 `v0.6.1`。
+- 已完成本地构建、安装与冬季配色截图验收。
+- 本轮先本地验收，未 push GitHub；GitHub 仍为 v0.6.1。
 
 环境
 ----
@@ -47,4 +49,4 @@ Gradle 9.3.1 / AGP 9.1.0
 
 安装
 ----
-adb install -r 征途手札-v0.6.1.apk
+adb install -r 征途手札-v0.7.0.apk
