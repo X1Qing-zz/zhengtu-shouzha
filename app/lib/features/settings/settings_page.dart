@@ -219,6 +219,30 @@ class SettingsPage extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                    decoration: BoxDecoration(
+                      color: c.accentSoft.withValues(alpha: c.isDark ? 0.42 : 0.62),
+                      borderRadius: BorderRadius.circular(11),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.repeat_rounded, size: 13, color: c.accent),
+                        const SizedBox(width: 7),
+                        Expanded(
+                          child: Text(
+                            '${store.activeHabits.length} 个每日打卡 · 累计 ${store.totalHabitCheckins} 次',
+                            style: AppText.sans(
+                              size: 10.5,
+                              weight: FontWeight.w500,
+                              color: c.inkSoft,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
                   Divider(height: 1, color: c.line.withValues(alpha: 0.6)),
                   _SettingRow(
                     icon: Icons.auto_awesome_outlined,
@@ -297,7 +321,7 @@ class SettingsPage extends StatelessWidget {
                         const SizedBox(width: 7),
                         Expanded(
                           child: Text(
-                            '备份 ZIP 内含全部手札、任务、账目、设置与照片，请妥善保管。',
+                            '备份 ZIP 内含全部手札、任务、每日打卡、账目、设置与照片，请妥善保管。',
                             style: AppText.sans(size: 10, color: c.muted, height: 1.6),
                           ),
                         ),
@@ -494,6 +518,7 @@ class SettingsPage extends StatelessWidget {
       title: '恢复这份备份？',
       message: '备份时间：${relativeDay(package.exportedAt)} ${timeHm(package.exportedAt)}\n'
           '包含 ${package.diaryCount} 篇手札、${package.taskCount} 条任务、'
+          '${package.habitCount} 个每日打卡、${package.habitCheckinCount} 条打卡、'
           '${package.expenseCount} 笔账目、${package.imageCount} 张照片。\n\n'
           '恢复会替换当前全部记录与照片，且无法撤销。',
       confirmLabel: '恢复',
@@ -512,7 +537,9 @@ class SettingsPage extends StatelessWidget {
       Navigator.of(context, rootNavigator: true).pop();
       showAppSnack(
         context,
-        '已恢复 ${result.diaries} 篇手札、${result.tasks} 条任务、${result.expenses} 笔账目',
+        '已恢复 ${result.diaries} 篇手札、${result.tasks} 条任务、'
+        '${result.habits} 个打卡、${result.habitCheckins} 条打卡记录、'
+        '${result.expenses} 笔账目',
       );
     } catch (e) {
       if (!context.mounted) return;

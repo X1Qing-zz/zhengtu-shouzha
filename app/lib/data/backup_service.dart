@@ -25,6 +25,8 @@ class BackupPackage {
     required this.diaries,
     required this.tasks,
     required this.expenses,
+    required this.habits,
+    required this.habitCheckins,
     required this.images,
     required this.exportedAt,
     required this.appVersion,
@@ -34,6 +36,8 @@ class BackupPackage {
   final List<Map<String, Object?>> diaries;
   final List<Map<String, Object?>> tasks;
   final List<Map<String, Object?>> expenses;
+  final List<Map<String, Object?>> habits;
+  final List<Map<String, Object?>> habitCheckins;
   final Map<String, Uint8List> images;
   final DateTime exportedAt;
   final String appVersion;
@@ -41,6 +45,8 @@ class BackupPackage {
   int get diaryCount => diaries.length;
   int get taskCount => tasks.length;
   int get expenseCount => expenses.length;
+  int get habitCount => habits.length;
+  int get habitCheckinCount => habitCheckins.length;
   int get imageCount => images.length;
 }
 
@@ -49,6 +55,8 @@ class RestoreResult {
     required this.diaries,
     required this.tasks,
     required this.expenses,
+    required this.habits,
+    required this.habitCheckins,
     required this.images,
     required this.settings,
   });
@@ -56,18 +64,22 @@ class RestoreResult {
   final int diaries;
   final int tasks;
   final int expenses;
+  final int habits;
+  final int habitCheckins;
   final int images;
   final Map<String, Object?> settings;
 }
 
 class BackupService {
   static const String appId = 'zhengtu_shouzha';
-  static const int formatVersion = 2;
+  static const int formatVersion = 3;
 
   Future<File> export({
     required List<DiaryEntry> diaries,
     required List<TaskItem> tasks,
     required List<Expense> expenses,
+    required List<Habit> habits,
+    required List<HabitCheckin> habitCheckins,
     required Map<String, Object?> settings,
     required String appVersion,
   }) async {
@@ -91,6 +103,7 @@ class BackupService {
       serializedDiaries.add(map);
     }
 
+    final habitIds = habits.map((habit) => habit.id).toList();
     final payload = <String, Object?>{
       'app': appId,
       'schema': formatVersion,
@@ -101,6 +114,19 @@ class BackupService {
       'tasks': [for (final task in tasks) Map<String, Object?>.from(task.toMap())..remove('id')],
       'expenses': [
         for (final expense in expenses) Map<String, Object?>.from(expense.toMap())..remove('id'),
+      ],
+      'habits': [
+        for (final habit in habits) Map<String, Object?>.from(habit.toMap())..remove('id'),
+      ],
+      'habit_checkins': [
+        for (final checkin in habitCheckins)
+          if (habitIds.indexOf(checkin.habitId) >= 0)
+            {
+              ...Map<String, Object?>.from(checkin.toMap())
+                ..remove('id')
+                ..remove('habit_id'),
+              'habit_index': habitIds.indexOf(checkin.habitId),
+            },
       ],
     };
 
@@ -153,6 +179,8 @@ class BackupService {
     final diaries = _readRecordList(payload['diaries'], '手札');
     final tasks = _readRecordList(payload['tasks'], '任务');
     final expenses = _readRecordList(payload['expenses'], '账目');
+    final habits = _readOptionalRecordList(payload['habits'], '长期任务');
+    final habitCheckins = _readOptionalRecordList(payload['habit_checkins'], '打卡');
 
     final images = <String, Uint8List>{};
     for (final entry in archive.files) {
@@ -172,6 +200,8 @@ class BackupService {
       diaries: diaries,
       tasks: tasks,
       expenses: expenses,
+      habits: habits,
+      habitCheckins: habitCheckins,
       images: images,
       exportedAt: exportedAt,
       appVersion: appVersion,
@@ -190,6 +220,11 @@ class BackupService {
       result.add(Map<String, Object?>.from(item));
     }
     return result;
+  }
+
+  List<Map<String, Object?>> _readOptionalRecordList(Object? raw, String label) {
+    if (raw == null) return [];
+    return _readRecordList(raw, label);
   }
 
   Future<RestoreResult> restore(BackupPackage package) async {
@@ -231,6 +266,13 @@ class BackupService {
     final expenseRows = [
       for (final row in package.expenses) Map<String, Object?>.from(row)..remove('id'),
     ];
+    final habitRows = [
+      for (final row in package.habits) Map<String, Object?>.from(row)..remove('id'),
+    ];
+    final checkinRows = [
+      for (final row in package.habitCheckins)
+        Map<String, Object?>.from(row)..remove('id'),
+    ];
 
     try {
       final db = await AppDatabase.instance.database;
@@ -239,6 +281,8 @@ class BackupService {
         await txn.delete('tasks');
         await txn.delete('expenses');
         await txn.delete('weather_cache');
+        await txn.delete('habit_checkins');
+        await txn.delete('habits');
         for (final row in diaryRows) {
           await txn.insert('diaries', row);
         }
@@ -247,6 +291,20 @@ class BackupService {
         }
         for (final row in expenseRows) {
           await txn.insert('expenses', row);
+        }
+        final restoredHabitIds = <int>[];
+        for (final row in habitRows) {
+          restoredHabitIds.add(await txn.insert('habits', row));
+        }
+        for (final row in checkinRows) {
+          final index = row['habit_index'];
+          if (index is! int || index < 0 || index >= restoredHabitIds.length) {
+            continue;
+          }
+          final checkin = Map<String, Object?>.from(row)
+            ..remove('habit_index')
+            ..['habit_id'] = restoredHabitIds[index];
+          await txn.insert('habit_checkins', checkin);
         }
       });
     } catch (_) {
@@ -257,6 +315,8 @@ class BackupService {
       diaries: diaryRows.length,
       tasks: taskRows.length,
       expenses: expenseRows.length,
+      habits: habitRows.length,
+      habitCheckins: checkinRows.length,
       images: savedImages.length,
       settings: package.settings,
     );

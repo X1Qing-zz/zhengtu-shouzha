@@ -226,6 +226,137 @@ class TaskItem {
       );
 }
 
+/// A long-running daily task. Each day gets a separate [HabitCheckin] row.
+class Habit {
+  const Habit({
+    this.id,
+    required this.title,
+    this.note = '',
+    this.type = TaskType.main,
+    this.priority = TaskPriority.medium,
+    this.frequency = 'daily',
+    required this.startDate,
+    this.archived = false,
+    required this.createdAt,
+    required this.updatedAt,
+  });
+
+  final int? id;
+  final String title;
+  final String note;
+  final TaskType type;
+  final TaskPriority priority;
+  final String frequency;
+  final DateTime startDate;
+  final bool archived;
+  final DateTime createdAt;
+  final DateTime updatedAt;
+
+  String get frequencyLabel => '每天';
+
+  Habit copyWith({
+    int? id,
+    String? title,
+    String? note,
+    TaskType? type,
+    TaskPriority? priority,
+    String? frequency,
+    DateTime? startDate,
+    bool? archived,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return Habit(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      note: note ?? this.note,
+      type: type ?? this.type,
+      priority: priority ?? this.priority,
+      frequency: frequency ?? this.frequency,
+      startDate: startDate ?? this.startDate,
+      archived: archived ?? this.archived,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
+
+  Map<String, Object?> toMap() => {
+        if (id != null) 'id': id,
+        'title': title,
+        'note': note,
+        'type': type.key,
+        'priority': priority.key,
+        'frequency': frequency,
+        'start_date': ymd(startDate),
+        'archived': archived ? 1 : 0,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
+      };
+
+  factory Habit.fromMap(Map<String, Object?> map) => Habit(
+        id: map['id'] as int?,
+        title: map['title'] as String? ?? '',
+        note: map['note'] as String? ?? '',
+        type: TaskType.fromKey(map['type'] as String?),
+        priority: TaskPriority.fromKey(map['priority'] as String?),
+        frequency: map['frequency'] as String? ?? 'daily',
+        startDate: dateOnly(parseDate(map['start_date'] as String? ?? '')),
+        archived: (map['archived'] as int? ?? 0) == 1,
+        createdAt: parseDate(map['created_at'] as String? ?? ''),
+        updatedAt: parseDate(
+          map['updated_at'] as String? ?? map['created_at'] as String? ?? '',
+        ),
+      );
+}
+
+class HabitCheckin {
+  const HabitCheckin({
+    this.id,
+    required this.habitId,
+    required this.checkinDate,
+    required this.checkedAt,
+    this.note = '',
+  });
+
+  final int? id;
+  final int habitId;
+  final DateTime checkinDate;
+  final DateTime checkedAt;
+  final String note;
+
+  HabitCheckin copyWith({
+    int? id,
+    int? habitId,
+    DateTime? checkinDate,
+    DateTime? checkedAt,
+    String? note,
+  }) {
+    return HabitCheckin(
+      id: id ?? this.id,
+      habitId: habitId ?? this.habitId,
+      checkinDate: checkinDate ?? this.checkinDate,
+      checkedAt: checkedAt ?? this.checkedAt,
+      note: note ?? this.note,
+    );
+  }
+
+  Map<String, Object?> toMap() => {
+        if (id != null) 'id': id,
+        'habit_id': habitId,
+        'checkin_date': ymd(checkinDate),
+        'checked_at': checkedAt.toIso8601String(),
+        'note': note,
+      };
+
+  factory HabitCheckin.fromMap(Map<String, Object?> map) => HabitCheckin(
+        id: map['id'] as int?,
+        habitId: map['habit_id'] as int? ?? 0,
+        checkinDate: dateOnly(parseDate(map['checkin_date'] as String? ?? '')),
+        checkedAt: parseDate(map['checked_at'] as String? ?? ''),
+        note: map['note'] as String? ?? '',
+      );
+}
+
 class Expense {
   const Expense({
     this.id,

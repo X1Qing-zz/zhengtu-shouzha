@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import '../core/app_info.dart';
 import '../core/date_utils.dart';
 import '../data/backup_service.dart';
+import '../data/habit_stats.dart';
 import '../data/image_store.dart';
 import '../data/location_service.dart';
 import '../data/models.dart';
@@ -61,12 +62,15 @@ class AppStore extends ChangeNotifier {
   final DiaryRepository _diaryRepo = DiaryRepository();
   final TaskRepository _taskRepo = TaskRepository();
   final ExpenseRepository _expenseRepo = ExpenseRepository();
+  final HabitRepository _habitRepo = HabitRepository();
   final WeatherRepository _weatherRepo = WeatherRepository();
   final BackupService _backupService = BackupService();
 
   List<DiaryEntry> _diaries = [];
   List<TaskItem> _tasks = [];
   List<Expense> _expenses = [];
+  List<Habit> _habits = [];
+  List<HabitCheckin> _habitCheckins = [];
 
   WeatherSnapshot? _weather;
   bool _weatherLoading = false;
@@ -78,8 +82,11 @@ class AppStore extends ChangeNotifier {
     _diaries = await _diaryRepo.all();
     _tasks = await _taskRepo.all();
     _expenses = await _expenseRepo.all();
+    _habits = await _habitRepo.all();
+    _habitCheckins = await _habitRepo.allCheckins();
     _sortDiaries();
     _sortExpenses();
+    _sortHabits();
   }
 
   // ---------------------------------------------------------------------------
@@ -212,6 +219,8 @@ class AppStore extends ChangeNotifier {
       diaries: _diaries,
       tasks: _tasks,
       expenses: _expenses,
+      habits: _habits,
+      habitCheckins: _habitCheckins,
       settings: _settings.exportForBackup(),
       appVersion: kAppVersion,
     );
@@ -270,6 +279,63 @@ class AppStore extends ChangeNotifier {
         .toList()
       ..sort((a, b) => (a.completedAt ?? a.createdAt).compareTo(b.completedAt ?? b.createdAt));
   }
+
+  List<Habit> get habits => List.unmodifiable(_habits);
+
+  List<Habit> get activeHabits => List.unmodifiable(
+        _habits.where(
+          (habit) =>
+              !habit.archived &&
+              !dateOnly(habit.startDate).isAfter(today()),
+        ),
+      );
+
+  List<HabitCheckin> get habitCheckins => List.unmodifiable(_habitCheckins);
+
+  HabitCheckin? habitCheckinOn(Habit habit, [DateTime? day]) {
+    final key = ymd(day ?? today());
+    for (final checkin in _habitCheckins) {
+      if (checkin.habitId == habit.id && ymd(checkin.checkinDate) == key) {
+        return checkin;
+      }
+    }
+    return null;
+  }
+
+  bool isHabitCheckedOn(Habit habit, [DateTime? day]) =>
+      habitCheckinOn(habit, day) != null;
+
+  List<HabitCheckin> habitCheckinsOn(DateTime day) {
+    return _habitCheckins
+        .where((checkin) => isSameDay(checkin.checkinDate, day))
+        .toList()
+      ..sort((a, b) => a.checkedAt.compareTo(b.checkedAt));
+  }
+
+  HabitStats habitStats(Habit habit) => computeHabitStats(
+        _habitCheckins.where((checkin) => checkin.habitId == habit.id),
+      );
+
+  int get todayHabitDoneCount =>
+      activeHabits.where((habit) => isHabitCheckedOn(habit)).length;
+
+  int get weekHabitCheckinCount {
+    final start = startOfWeek(today());
+    return _habitCheckins
+        .where((checkin) => !dateOnly(checkin.checkinDate).isBefore(start))
+        .length;
+  }
+
+  int get weekHabitDoneDays {
+    final start = startOfWeek(today());
+    return _habitCheckins
+        .where((checkin) => !dateOnly(checkin.checkinDate).isBefore(start))
+        .map((checkin) => ymd(checkin.checkinDate))
+        .toSet()
+        .length;
+  }
+
+  int get totalHabitCheckins => _habitCheckins.length;
 
   List<Expense> entriesOn(DateTime day) {
     return _expenses.where((e) => isSameDay(e.spentAt, day)).toList()
@@ -344,6 +410,7 @@ class AppStore extends ChangeNotifier {
       ..._diaries.map((e) => ymd(e.date)),
       ..._tasks.where((t) => t.completedAt != null).map((t) => ymd(t.completedAt!)),
       ..._expenses.map((e) => ymd(e.spentAt)),
+      ..._habitCheckins.map((c) => ymd(c.checkinDate)),
     };
     return dates.length;
   }
@@ -438,9 +505,17 @@ class AppStore extends ChangeNotifier {
       .map((e) => ymd(e.spentAt))
       .toSet();
 
+  Set<String> habitCheckinDatesInMonth(DateTime month) => _habitCheckins
+      .where((c) =>
+          c.checkinDate.year == month.year &&
+          c.checkinDate.month == month.month)
+      .map((c) => ymd(c.checkinDate))
+      .toSet();
+
   bool hasRecordsOn(DateTime day) =>
       diaryForDay(day) != null ||
       tasksCompletedOn(day).isNotEmpty ||
+      habitCheckinsOn(day).isNotEmpty ||
       entriesOn(day).isNotEmpty;
 
   // ---------------------------------------------------------------------------
@@ -527,6 +602,74 @@ class AppStore extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
+  // Habits
+  // ---------------------------------------------------------------------------
+
+  Future<Habit> saveHabit(Habit habit) async {
+    final now = DateTime.now();
+    final value = habit.copyWith(updatedAt: now);
+    Habit saved;
+    if (value.id == null) {
+      saved = await _habitRepo.insert(value);
+      _habits.add(saved);
+    } else {
+      await _habitRepo.update(value);
+      saved = value;
+      final index = _habits.indexWhere((h) => h.id == value.id);
+      if (index >= 0) _habits[index] = value;
+    }
+    _sortHabits();
+    notifyListeners();
+    return saved;
+  }
+
+  Future<void> setHabitArchived(Habit habit, bool archived) async {
+    if (habit.id == null) return;
+    final updated = habit.copyWith(
+      archived: archived,
+      updatedAt: DateTime.now(),
+    );
+    await _habitRepo.update(updated);
+    final index = _habits.indexWhere((h) => h.id == habit.id);
+    if (index >= 0) _habits[index] = updated;
+    _sortHabits();
+    notifyListeners();
+  }
+
+  Future<void> deleteHabit(Habit habit) async {
+    if (habit.id == null) return;
+    await _habitRepo.deleteHabitWithCheckins(habit.id!);
+    _habits.removeWhere((h) => h.id == habit.id);
+    _habitCheckins.removeWhere((c) => c.habitId == habit.id);
+    notifyListeners();
+  }
+
+  Future<HabitCheckin?> checkInHabit(Habit habit) async {
+    if (habit.id == null) return null;
+    final existing = habitCheckinOn(habit);
+    if (existing != null) return existing;
+    final now = DateTime.now();
+    final saved = await _habitRepo.insertCheckin(
+      HabitCheckin(
+        habitId: habit.id!,
+        checkinDate: dateOnly(now),
+        checkedAt: now,
+      ),
+    );
+    _habitCheckins.add(saved);
+    notifyListeners();
+    return saved;
+  }
+
+  Future<void> undoHabitCheckin(Habit habit) async {
+    final existing = habitCheckinOn(habit);
+    if (existing?.id == null) return;
+    await _habitRepo.deleteCheckin(existing!.id!);
+    _habitCheckins.removeWhere((c) => c.id == existing.id);
+    notifyListeners();
+  }
+
+  // ---------------------------------------------------------------------------
   // Expenses
   // ---------------------------------------------------------------------------
 
@@ -589,7 +732,13 @@ class AppStore extends ChangeNotifier {
   }
 
   Future<void> _seedDemoData() async {
-    if (_diaries.isNotEmpty || _tasks.isNotEmpty || _expenses.isNotEmpty) return;
+    if (_diaries.isNotEmpty ||
+        _tasks.isNotEmpty ||
+        _expenses.isNotEmpty ||
+        _habits.isNotEmpty ||
+        _habitCheckins.isNotEmpty) {
+      return;
+    }
     final base = today();
     DateTime at(int daysAgo, int hour, int minute) {
       final d = base.subtract(Duration(days: daysAgo));
@@ -739,6 +888,48 @@ class AppStore extends ChangeNotifier {
       await _taskRepo.insert(task);
     }
 
+    final habits = <Habit>[
+      Habit(
+        title: '健身',
+        note: '哪怕只练二十分钟，也算今天没有缺席。',
+        type: TaskType.main,
+        priority: TaskPriority.high,
+        startDate: at(24, 0, 0),
+        createdAt: at(24, 20, 0),
+        updatedAt: at(0, 20, 0),
+      ),
+      Habit(
+        title: '学日语',
+        note: '每天背十个词，慢慢来。',
+        type: TaskType.main,
+        priority: TaskPriority.medium,
+        startDate: at(16, 0, 0),
+        createdAt: at(16, 21, 0),
+        updatedAt: at(0, 20, 0),
+      ),
+    ];
+    final habitIds = <int>[];
+    for (final habit in habits) {
+      final saved = await _habitRepo.insert(habit);
+      habitIds.add(saved.id!);
+    }
+    final checkinPlan = <int, List<int>>{
+      habitIds[0]: [0, 1, 2, 4, 5, 7, 8, 9, 12, 13, 14, 16, 18, 20, 21],
+      habitIds[1]: [0, 2, 3, 4, 6, 8, 10, 11, 14, 15],
+    };
+    for (final entry in checkinPlan.entries) {
+      for (final daysAgo in entry.value) {
+        final day = base.subtract(Duration(days: daysAgo));
+        await _habitRepo.insertCheckin(
+          HabitCheckin(
+            habitId: entry.key,
+            checkinDate: day,
+            checkedAt: DateTime(day.year, day.month, day.day, 20, 30),
+          ),
+        );
+      }
+    }
+
     final expenses = <Expense>[
       Expense(amount: 6500, category: '工资', note: '本月实习工资', spentAt: at(1, 10, 0), createdAt: at(1, 10, 5), isIncome: true),
       Expense(amount: 28.5, category: '餐饮', note: '楼下的牛肉面', spentAt: at(0, 12, 20), createdAt: at(0, 12, 25)),
@@ -775,6 +966,15 @@ class AppStore extends ChangeNotifier {
       final byPriority = a.priority.rank.compareTo(b.priority.rank);
       if (byPriority != 0) return byPriority;
       return (a.dueDate ?? DateTime(9999)).compareTo(b.dueDate ?? DateTime(9999));
+    });
+  }
+
+  void _sortHabits() {
+    _habits.sort((a, b) {
+      if (a.archived != b.archived) return a.archived ? 1 : -1;
+      final byPriority = a.priority.rank.compareTo(b.priority.rank);
+      if (byPriority != 0) return byPriority;
+      return b.createdAt.compareTo(a.createdAt);
     });
   }
 }

@@ -49,11 +49,29 @@ class _CalendarPageState extends State<CalendarPage> {
     final c = context.colors;
     final month = _visibleMonth;
     final diaryDates = store.diaryDatesInMonth(month);
-    final taskDates = store.taskDoneDatesInMonth(month);
+    final taskDates = {
+      ...store.taskDoneDatesInMonth(month),
+      ...store.habitCheckinDatesInMonth(month),
+    };
     final expenseDates = store.expenseDatesInMonth(month);
     final monthRecordDays = <String>{...diaryDates, ...taskDates, ...expenseDates}.length;
     final diary = store.diaryForDay(_selected);
     final tasks = store.tasksCompletedOn(_selected);
+    final checkins = store.habitCheckinsOn(_selected);
+    final checkinTitles = [
+      for (final checkin in checkins)
+        store.habits
+            .firstWhere(
+              (habit) => habit.id == checkin.habitId,
+              orElse: () => Habit(
+                title: '每日打卡',
+                startDate: today(),
+                createdAt: DateTime.now(),
+                updatedAt: DateTime.now(),
+              ),
+            )
+            .title,
+    ];
     final expenses = store.entriesOn(_selected);
     final dayTotal = store.expenseTotalOn(_selected);
     final dayIncome = store.incomeTotalOn(_selected);
@@ -198,7 +216,7 @@ class _CalendarPageState extends State<CalendarPage> {
                     children: [
                       _LegendDot(color: c.accent, label: '手札'),
                       const SizedBox(width: 14),
-                      _LegendDot(color: c.moss, label: '完成任务'),
+                      _LegendDot(color: c.moss, label: '完成 / 打卡'),
                       const SizedBox(width: 14),
                       _LegendDot(color: c.terra, label: '账目'),
                     ],
@@ -211,6 +229,7 @@ class _CalendarPageState extends State<CalendarPage> {
               day: _selected,
               diary: diary,
               tasks: tasks,
+              checkinTitles: checkinTitles,
               expenses: expenses,
               total: dayTotal,
               income: dayIncome,
@@ -405,6 +424,7 @@ class _SelectedDayCard extends StatelessWidget {
     required this.day,
     required this.diary,
     required this.tasks,
+    required this.checkinTitles,
     required this.expenses,
     required this.total,
     required this.income,
@@ -417,6 +437,7 @@ class _SelectedDayCard extends StatelessWidget {
   final DateTime day;
   final DiaryEntry? diary;
   final List<TaskItem> tasks;
+  final List<String> checkinTitles;
   final List<Expense> expenses;
   final double total;
   final double income;
@@ -428,7 +449,8 @@ class _SelectedDayCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.colors;
-    final hasAny = diary != null || tasks.isNotEmpty || expenses.isNotEmpty;
+    final hasAny =
+        diary != null || tasks.isNotEmpty || checkinTitles.isNotEmpty || expenses.isNotEmpty;
     return PaperCard(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
       child: Column(
@@ -452,7 +474,7 @@ class _SelectedDayCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 3),
                     Text(
-                      '${weekdayLabel(day)} · ${isFuture ? '还没到来' : hasAny ? '留下了 ${tasks.length + expenses.length + (diary == null ? 0 : 1)} 条记录' : '还没有记录'}',
+                      '${weekdayLabel(day)} · ${isFuture ? '还没到来' : hasAny ? '留下了 ${tasks.length + checkinTitles.length + expenses.length + (diary == null ? 0 : 1)} 条记录' : '还没有记录'}',
                       style: AppText.sans(size: 10, color: c.muted),
                     ),
                   ],
@@ -565,6 +587,29 @@ class _SelectedDayCard extends StatelessWidget {
                   ),
                 ),
             ],
+            if (checkinTitles.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.repeat_rounded, size: 14, color: c.accent),
+                  const SizedBox(width: 7),
+                  Expanded(
+                    child: Text(
+                      '打卡 ${checkinTitles.length} 次 · ${checkinTitles.join('、')}',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppText.sans(
+                        size: 10.5,
+                        weight: FontWeight.w600,
+                        color: c.accent,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             if (expenses.isNotEmpty) ...[
               const SizedBox(height: 10),
               Row(
@@ -604,7 +649,8 @@ class _MonthSummary extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.colors;
     final diaryCount = store.diaryDatesInMonth(month).length;
-    final taskCount = store.monthDoneCount(month);
+    final taskCount =
+        store.monthDoneCount(month) + store.habitCheckinDatesInMonth(month).length;
     final entryCount = store.entriesInMonth(month).length;
     return PaperCard(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
@@ -621,7 +667,7 @@ class _MonthSummary extends StatelessWidget {
                 child: StatBlock(value: '$diaryCount', label: '手札 / 篇', tone: c.accent),
               ),
               Expanded(
-                child: StatBlock(value: '$taskCount', label: '完成任务', tone: c.moss),
+                child: StatBlock(value: '$taskCount', label: '完成 / 打卡', tone: c.moss),
               ),
               Expanded(
                 child: StatBlock(

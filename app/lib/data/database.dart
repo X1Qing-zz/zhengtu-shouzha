@@ -15,7 +15,7 @@ class AppDatabase {
     final path = p.join(dir, 'zhengtu_shouzha.db');
     _database = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onConfigure: (db) async {
         await db.rawQuery('PRAGMA journal_mode = WAL');
       },
@@ -31,6 +31,42 @@ class AppDatabase {
         'ALTER TABLE expenses ADD COLUMN is_income INTEGER NOT NULL DEFAULT 0',
       );
     }
+    if (oldVersion < 3) {
+      await _createHabitTables(db);
+    }
+  }
+
+  Future<void> _createHabitTables(Database db) async {
+    await db.execute('''
+      CREATE TABLE habits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        note TEXT NOT NULL DEFAULT '',
+        type TEXT NOT NULL DEFAULT 'main',
+        priority TEXT NOT NULL DEFAULT 'medium',
+        frequency TEXT NOT NULL DEFAULT 'daily',
+        start_date TEXT NOT NULL,
+        archived INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE habit_checkins (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        habit_id INTEGER NOT NULL,
+        checkin_date TEXT NOT NULL,
+        checked_at TEXT NOT NULL,
+        note TEXT NOT NULL DEFAULT '',
+        UNIQUE(habit_id, checkin_date)
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX idx_habits_archived ON habits(archived)',
+    );
+    await db.execute(
+      'CREATE INDEX idx_habit_checkins_date ON habit_checkins(checkin_date)',
+    );
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -81,6 +117,7 @@ class AppDatabase {
     await db.execute('CREATE INDEX idx_tasks_due ON tasks(due_date)');
     await db.execute('CREATE INDEX idx_expenses_spent ON expenses(spent_at)');
     await db.execute('CREATE INDEX idx_diaries_date ON diaries(date)');
+    await _createHabitTables(db);
   }
 
   Future<void> close() async {
@@ -94,5 +131,7 @@ class AppDatabase {
     await db.delete('tasks');
     await db.delete('expenses');
     await db.delete('weather_cache');
+    await db.delete('habit_checkins');
+    await db.delete('habits');
   }
 }

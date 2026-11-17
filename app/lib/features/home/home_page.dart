@@ -14,6 +14,8 @@ import '../../widgets/common.dart';
 import '../../widgets/compass_mark.dart';
 import '../../widgets/weather_glyph.dart';
 import '../diary/diary_editor.dart';
+import '../habits/habit_detail_page.dart';
+import '../habits/habit_row.dart';
 import '../launch/launch_targets.dart';
 import '../ledger/expense_editor.dart';
 import '../settings/settings_page.dart';
@@ -33,6 +35,7 @@ class HomePage extends StatelessWidget {
     final now = DateTime.now();
     final todayTasks = store.todayTasks;
     final diary = store.diaryForDay(now);
+    final habits = store.activeHabits;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -67,6 +70,35 @@ class HomePage extends StatelessWidget {
                 onRetry: () => store.loadWeather(force: true),
               ),
               const SizedBox(height: 26),
+              if (habits.isNotEmpty) ...[
+                SectionHeading(
+                  eyebrow: 'DAILY CHECK-IN',
+                  title: '今日打卡',
+                  actionLabel: '全部',
+                  onAction: () => onNavigate(1),
+                ),
+                const SizedBox(height: 12),
+                PaperCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < habits.length; i++) ...[
+                        HabitRow(
+                          habit: habits[i],
+                          checkin: store.habitCheckinOn(habits[i]),
+                          stats: store.habitStats(habits[i]),
+                          compact: true,
+                          onToggle: () => _toggleHabit(context, store, habits[i]),
+                          onTap: () => _openHabit(context, habits[i]),
+                        ),
+                        if (i != habits.length - 1)
+                          Divider(height: 1, color: c.line.withValues(alpha: 0.55)),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 26),
+              ],
               SectionHeading(
                 eyebrow: 'TODAY · QUESTS',
                 title: '今日任务',
@@ -134,6 +166,7 @@ class HomePage extends StatelessWidget {
               const SizedBox(height: 26),
               _WeeklyEntry(
                 taskDone: store.weekDoneCount,
+                checkins: store.weekHabitCheckinCount,
                 diaries: store.weekDiaryCount,
                 expenses: store.weekExpenseTotal,
                 onTap: () => Navigator.of(context).push(
@@ -179,6 +212,35 @@ class HomePage extends StatelessWidget {
         ),
       );
     }
+  }
+
+  Future<void> _toggleHabit(BuildContext context, AppStore store, Habit habit) async {
+    final wasChecked = store.isHabitCheckedOn(habit);
+    if (wasChecked) {
+      await store.undoHabitCheckin(habit);
+      if (!context.mounted) return;
+      showAppSnack(context, '已撤销「${habit.title}」今天的打卡');
+      return;
+    }
+    await store.checkInHabit(habit);
+    if (!context.mounted) return;
+    final stats = store.habitStats(habit);
+    showAppSnack(
+      context,
+      stats.currentStreak > 1
+          ? '「${habit.title}」打卡成功，连续 ${stats.currentStreak} 天'
+          : '「${habit.title}」打卡成功',
+      action: SnackBarAction(
+        label: '撤销',
+        onPressed: () => store.undoHabitCheckin(habit),
+      ),
+    );
+  }
+
+  void _openHabit(BuildContext context, Habit habit) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => HabitDetailPage(habit: habit)),
+    );
   }
 
   void _openDiary(BuildContext context, DiaryEntry? entry) {
@@ -810,12 +872,14 @@ class _WeatherPlaceholder extends StatelessWidget {
 class _WeeklyEntry extends StatelessWidget {
   const _WeeklyEntry({
     required this.taskDone,
+    required this.checkins,
     required this.diaries,
     required this.expenses,
     required this.onTap,
   });
 
   final int taskDone;
+  final int checkins;
   final int diaries;
   final double expenses;
   final VoidCallback onTap;
@@ -857,7 +921,7 @@ class _WeeklyEntry extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '完成任务 $taskDone · 手札 $diaries · 支出 ${money(expenses)}',
+                  '完成任务 $taskDone · 打卡 $checkins · 手札 $diaries · 支出 ${money(expenses)}',
                   style: AppText.sans(size: 10, color: c.inkSoft.withValues(alpha: 0.8)),
                 ),
               ],

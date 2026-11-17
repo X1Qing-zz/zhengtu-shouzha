@@ -38,10 +38,14 @@ class _DayDetailPageState extends State<DayDetailPage> {
     final c = context.colors;
     final diary = store.diaryForDay(_day);
     final tasks = store.tasksCompletedOn(_day);
+    final checkins = store.habitCheckinsOn(_day);
     final entries = store.entriesOn(_day);
     final total = store.expenseTotalOn(_day);
     final income = store.incomeTotalOn(_day);
-    final hasAny = diary != null || tasks.isNotEmpty || entries.isNotEmpty;
+    final hasAny = diary != null ||
+        tasks.isNotEmpty ||
+        checkins.isNotEmpty ||
+        entries.isNotEmpty;
 
     return Scaffold(
       backgroundColor: c.bg,
@@ -120,8 +124,8 @@ class _DayDetailPageState extends State<DayDetailPage> {
                   Container(width: 0.8, height: 32, color: c.line),
                   Expanded(
                     child: _DayStat(
-                      value: '${tasks.length}',
-                      label: '完成任务',
+                      value: '${tasks.length + checkins.length}',
+                      label: '完成 / 打卡',
                       color: c.moss,
                       icon: Icons.task_alt_rounded,
                     ),
@@ -283,6 +287,49 @@ class _DayDetailPageState extends State<DayDetailPage> {
                   ],
                 ),
               ),
+            if (checkins.isNotEmpty) ...[
+              const SizedBox(height: 26),
+              SectionHeading(eyebrow: 'Habits', title: '这一天的打卡'),
+              const SizedBox(height: 10),
+              PaperCard(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Column(
+                  children: [
+                    for (var i = 0; i < checkins.length; i++) ...[
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: c.accentSoft,
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(Icons.repeat_rounded, size: 12, color: c.accent),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                _habitTitle(store, checkins[i].habitId),
+                                style: AppText.sans(size: 13.5, color: c.ink),
+                              ),
+                            ),
+                            Text(
+                              timeHm(checkins[i].checkedAt),
+                              style: AppText.sans(size: 9.5, color: c.muted),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (i != checkins.length - 1)
+                        Divider(height: 1, color: c.line.withValues(alpha: 0.5)),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 26),
             SectionHeading(
               eyebrow: 'Ledger',
@@ -358,7 +405,7 @@ class _DayDetailPageState extends State<DayDetailPage> {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Text(
-                    _summary(diary, tasks, total, income),
+                    _summary(diary, tasks, checkins.length, total, income),
                     textAlign: TextAlign.center,
                     style: AppText.serifStyle(
                       size: 13,
@@ -376,14 +423,28 @@ class _DayDetailPageState extends State<DayDetailPage> {
     );
   }
 
-  String _summary(DiaryEntry? diary, List<TaskItem> tasks, double total, double income) {
+  String _summary(
+    DiaryEntry? diary,
+    List<TaskItem> tasks,
+    int checkinCount,
+    double total,
+    double income,
+  ) {
     final pieces = <String>[];
     if (diary != null) pieces.add('写下了 ${diary.charCount} 个字');
     if (tasks.isNotEmpty) pieces.add('完成了 ${tasks.length} 件任务');
+    if (checkinCount > 0) pieces.add('打卡 $checkinCount 次');
     if (total > 0) pieces.add('花了 ${money(total)}');
     if (income > 0) pieces.add('收入 ${money(income)}');
     if (pieces.isEmpty) return '平凡的一天，也值得被记住。';
     return '这一天，你${pieces.join('，')}。\n每一步，都算数。';
+  }
+
+  String _habitTitle(AppStore store, int habitId) {
+    for (final habit in store.habits) {
+      if (habit.id == habitId) return habit.title;
+    }
+    return '每日打卡';
   }
 
   void _editDiary(BuildContext context, DiaryEntry? diary) {

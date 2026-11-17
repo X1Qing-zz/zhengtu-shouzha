@@ -44,6 +44,7 @@ class _WeeklyReviewPageState extends State<WeeklyReviewPage> {
       diaries: store.diaries,
       tasks: store.tasks,
       expenses: store.expenses,
+      habitCheckins: store.habitCheckins,
       anchor: _weekStart,
     );
     final highlightIndex = report.isCurrentWeek
@@ -396,15 +397,41 @@ class _WeekStats extends StatelessWidget {
     final c = context.colors;
     return PaperCard(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 16),
-      child: Row(
+      child: Column(
         children: [
-          _StatCell(value: '${report.taskDone}', label: '完成任务', tone: c.moss),
-          _divider(c),
-          _StatCell(value: '${report.diaryCount}', label: '手札', tone: c.accent),
-          _divider(c),
-          _StatCell(value: money(report.expenseTotal), label: '支出', tone: c.terra),
-          _divider(c),
-          _StatCell(value: '${report.activeDays}', label: '足迹 / 天', tone: c.ink),
+          Row(
+            children: [
+              _StatCell(value: '${report.taskDone}', label: '完成任务', tone: c.moss),
+              _divider(c),
+              _StatCell(value: '${report.diaryCount}', label: '手札', tone: c.accent),
+              _divider(c),
+              _StatCell(value: money(report.expenseTotal), label: '支出', tone: c.terra),
+              _divider(c),
+              _StatCell(value: '${report.activeDays}', label: '足迹 / 天', tone: c.ink),
+            ],
+          ),
+          if (report.habitCheckins > 0) ...[
+            Divider(height: 22, color: c.line.withValues(alpha: 0.6)),
+            Row(
+              children: [
+                Icon(Icons.repeat_rounded, size: 14, color: c.accent),
+                const SizedBox(width: 6),
+                Text(
+                  '每日打卡',
+                  style: AppText.sans(
+                    size: 10.5,
+                    weight: FontWeight.w600,
+                    color: c.accent,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${report.habitCheckinDays} 天 · ${report.habitCheckins} 次',
+                  style: AppText.sans(size: 10, color: c.muted),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

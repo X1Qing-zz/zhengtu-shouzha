@@ -8,6 +8,9 @@ import '../../data/models.dart';
 import '../../state/app_store.dart';
 import '../../widgets/charts.dart';
 import '../../widgets/common.dart';
+import '../habits/habit_detail_page.dart';
+import '../habits/habit_editor.dart';
+import '../habits/habit_row.dart';
 import 'task_editor.dart';
 
 enum _StatusFilter { open, done, all }
@@ -45,6 +48,7 @@ class _TasksPageState extends State<TasksPage> {
 
     final groups = _buildGroups(items, store);
     final todayTasks = store.todayTasks;
+    final habits = store.activeHabits;
     final todayRatio = todayTasks.isEmpty
         ? 0.0
         : todayTasks.where((t) => t.done).length / todayTasks.length;
@@ -54,7 +58,7 @@ class _TasksPageState extends State<TasksPage> {
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(bottom: 84),
         child: FloatingActionButton.extended(
-          onPressed: () => showTaskEditor(context),
+          onPressed: () => _showCreate(context),
           backgroundColor: c.ink,
           foregroundColor: c.bg,
           elevation: 3,
@@ -77,9 +81,38 @@ class _TasksPageState extends State<TasksPage> {
             Text('主线与支线', style: AppText.serifStyle(size: 32, color: c.ink, letterSpacing: 2)),
             const SizedBox(height: 8),
             Text(
-              '待完成 ${store.openTaskCount} 项 · 今日完成 ${store.todayDoneCount} 项',
+              '待完成 ${store.openTaskCount} 项 · 今日完成 ${store.todayDoneCount} 项'
+              '${habits.isNotEmpty ? ' · 打卡 ${store.todayHabitDoneCount}/${habits.length}' : ''}',
               style: AppText.sans(size: 12, color: c.muted, letterSpacing: 0.3),
             ),
+            if (habits.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              SectionHeading(
+                eyebrow: 'HABITS',
+                title: '每日打卡',
+                actionLabel: '新建',
+                onAction: () => _showCreate(context),
+              ),
+              const SizedBox(height: 10),
+              PaperCard(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                child: Column(
+                  children: [
+                    for (var i = 0; i < habits.length; i++) ...[
+                      HabitRow(
+                        habit: habits[i],
+                        checkin: store.habitCheckinOn(habits[i]),
+                        stats: store.habitStats(habits[i]),
+                        onToggle: () => _toggleHabit(context, store, habits[i]),
+                        onTap: () => _openHabit(context, habits[i]),
+                      ),
+                      if (i != habits.length - 1)
+                        Divider(height: 1, color: c.line.withValues(alpha: 0.55)),
+                    ],
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 22),
             PaperCard(
               padding: const EdgeInsets.fromLTRB(18, 17, 18, 17),
@@ -177,7 +210,7 @@ class _TasksPageState extends State<TasksPage> {
                     ? '完成一条任务，它会出现在这里。'
                     : '主线给你方向，支线给你风景。\n先写下一个想完成的小目标吧。',
                 actionLabel: _status == _StatusFilter.done ? null : '添加任务',
-                onAction: () => showTaskEditor(context),
+                onAction: () => _showCreate(context),
               )
             else
               for (final group in groups) ...[
@@ -224,6 +257,56 @@ class _TasksPageState extends State<TasksPage> {
         ),
       );
     }
+  }
+
+  Future<void> _showCreate(BuildContext context) async {
+    final choice = await showAppSheet<_CreateChoice>(
+      context,
+      const _CreateTaskSheet(),
+    );
+    if (choice == null || !context.mounted) return;
+    switch (choice) {
+      case _CreateChoice.task:
+        await showTaskEditor(context);
+        break;
+      case _CreateChoice.habit:
+        await showHabitEditor(context);
+        break;
+    }
+  }
+
+  Future<void> _toggleHabit(
+    BuildContext context,
+    AppStore store,
+    Habit habit,
+  ) async {
+    HapticFeedback.selectionClick();
+    final wasChecked = store.isHabitCheckedOn(habit);
+    if (wasChecked) {
+      await store.undoHabitCheckin(habit);
+      if (!context.mounted) return;
+      showAppSnack(context, '已撤销「${habit.title}」今天的打卡');
+      return;
+    }
+    await store.checkInHabit(habit);
+    if (!context.mounted) return;
+    final stats = store.habitStats(habit);
+    showAppSnack(
+      context,
+      stats.currentStreak > 1
+          ? '「${habit.title}」打卡成功，连续 ${stats.currentStreak} 天'
+          : '「${habit.title}」打卡成功',
+      action: SnackBarAction(
+        label: '撤销',
+        onPressed: () => store.undoHabitCheckin(habit),
+      ),
+    );
+  }
+
+  void _openHabit(BuildContext context, Habit habit) {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => HabitDetailPage(habit: habit)),
+    );
   }
 
   List<_TaskGroup> _buildGroups(List<TaskItem> items, AppStore store) {
@@ -394,6 +477,107 @@ class _TaskRow extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             Icon(Icons.chevron_right_rounded, size: 17, color: c.muted.withValues(alpha: 0.5)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum _CreateChoice { task, habit }
+
+class _CreateTaskSheet extends StatelessWidget {
+  const _CreateTaskSheet();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return AppSheet(
+      padding: const EdgeInsets.fromLTRB(22, 8, 22, 26),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SheetHeader(
+            title: '新建什么？',
+            subtitle: '一次性的目标，或者每天都要做的事',
+            onClose: () => Navigator.of(context).pop(),
+          ),
+          const SizedBox(height: 18),
+          _CreateTile(
+            icon: Icons.task_alt_rounded,
+            color: c.accent,
+            title: '一次性任务',
+            subtitle: '有截止日期，完成一次就结束',
+            onTap: () => Navigator.of(context).pop(_CreateChoice.task),
+          ),
+          const SizedBox(height: 10),
+          _CreateTile(
+            icon: Icons.repeat_rounded,
+            color: c.moss,
+            title: '每日打卡',
+            subtitle: '每天出现，记录时间、连续天数和累计次数',
+            onTap: () => Navigator.of(context).pop(_CreateChoice.habit),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CreateTile extends StatelessWidget {
+  const _CreateTile({
+    required this.icon,
+    required this.color,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.colors;
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.fromLTRB(14, 13, 12, 13),
+        decoration: BoxDecoration(
+          color: c.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: c.line.withValues(alpha: 0.8)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: c.isDark ? 0.2 : 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 18, color: color),
+            ),
+            const SizedBox(width: 11),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppText.serifStyle(size: 16, color: c.ink)),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: AppText.sans(size: 10.5, color: c.muted, height: 1.5),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_rounded, size: 16, color: color),
           ],
         ),
       ),

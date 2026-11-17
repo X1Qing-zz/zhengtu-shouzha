@@ -32,6 +32,8 @@ class WeeklyReport {
     required this.taskDone,
     required this.taskOpen,
     required this.taskOverdue,
+    required this.habitCheckins,
+    required this.habitCheckinDays,
     required this.expenseTotal,
     required this.previousExpenseTotal,
     required this.categories,
@@ -53,6 +55,8 @@ class WeeklyReport {
   final int taskDone;
   final int taskOpen;
   final int taskOverdue;
+  final int habitCheckins;
+  final int habitCheckinDays;
   final double expenseTotal;
   final double previousExpenseTotal;
   final List<WeeklyCategory> categories;
@@ -96,6 +100,7 @@ WeeklyReport buildWeeklyReport({
   required List<DiaryEntry> diaries,
   required List<TaskItem> tasks,
   required List<Expense> expenses,
+  List<HabitCheckin> habitCheckins = const [],
   required DateTime anchor,
 }) {
   final weekStart = startOfWeek(anchor);
@@ -111,6 +116,11 @@ WeeklyReport buildWeeklyReport({
       .toList();
   final weekEntries = expenses.where((expense) => inWeek(expense.spentAt)).toList();
   final weekExpenses = weekEntries.where((expense) => !expense.isIncome).toList();
+  final weekHabitCheckins = habitCheckins
+      .where((checkin) => inWeek(checkin.checkinDate))
+      .toList();
+  final habitCheckinDays =
+      weekHabitCheckins.map((checkin) => ymd(checkin.checkinDate)).toSet().length;
 
   final previousStart = weekStart.subtract(const Duration(days: 7));
   final previousExpenseTotal = expenses
@@ -152,6 +162,7 @@ WeeklyReport buildWeeklyReport({
     ...weekDiaries.map((entry) => ymd(entry.date)),
     ...weekTasks.map((task) => ymd(task.completedAt!)),
     ...weekEntries.map((expense) => ymd(expense.spentAt)),
+    ...weekHabitCheckins.map((checkin) => ymd(checkin.checkinDate)),
   };
 
   Expense? biggestExpense;
@@ -168,6 +179,7 @@ WeeklyReport buildWeeklyReport({
   final keyword = _keywordFor(
     diaryCount: weekDiaries.length,
     taskDone: weekTasks.length,
+    checkinCount: weekHabitCheckins.length,
     activeDays: activeDates.length,
     expenseTotal: expenseTotal,
     previousExpenseTotal: previousExpenseTotal,
@@ -176,6 +188,7 @@ WeeklyReport buildWeeklyReport({
     keyword: keyword,
     diaryCount: weekDiaries.length,
     taskDone: weekTasks.length,
+    checkinCount: weekHabitCheckins.length,
     expenseTotal: expenseTotal,
     activeDays: activeDates.length,
   );
@@ -201,6 +214,8 @@ WeeklyReport buildWeeklyReport({
     taskDone: weekTasks.length,
     taskOpen: taskOpen,
     taskOverdue: taskOverdue,
+    habitCheckins: weekHabitCheckins.length,
+    habitCheckinDays: habitCheckinDays,
     expenseTotal: expenseTotal,
     previousExpenseTotal: previousExpenseTotal,
     categories: categories,
@@ -219,11 +234,17 @@ WeeklyReport buildWeeklyReport({
 String _keywordFor({
   required int diaryCount,
   required int taskDone,
+  required int checkinCount,
   required int activeDays,
   required double expenseTotal,
   required double previousExpenseTotal,
 }) {
-  if (diaryCount == 0 && taskDone == 0 && expenseTotal == 0) return '留白';
+  if (diaryCount == 0 &&
+      taskDone == 0 &&
+      checkinCount == 0 &&
+      expenseTotal == 0) {
+    return '留白';
+  }
   if (diaryCount >= 4) return '记录';
   if (taskDone >= 5) return '推进';
   if (previousExpenseTotal > 0 && expenseTotal > previousExpenseTotal * 1.3) return '流动';
@@ -235,15 +256,20 @@ String _narrativeFor({
   required String keyword,
   required int diaryCount,
   required int taskDone,
+  required int checkinCount,
   required double expenseTotal,
   required int activeDays,
 }) {
-  if (diaryCount == 0 && taskDone == 0 && expenseTotal == 0) {
+  if (diaryCount == 0 &&
+      taskDone == 0 &&
+      checkinCount == 0 &&
+      expenseTotal == 0) {
     return '这一周，手札、任务和账本都安静着。休息也是冒险的一部分，等你想出发的时候，写下第一行就好。';
   }
 
   final parts = <String>[];
   if (taskDone > 0) parts.add('完成了 $taskDone 件任务');
+  if (checkinCount > 0) parts.add('打卡 $checkinCount 次');
   if (diaryCount > 0) parts.add('写下 $diaryCount 篇手札');
   if (expenseTotal > 0) parts.add('花掉 ${money(expenseTotal)}');
   final body = parts.join('，');

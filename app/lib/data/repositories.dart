@@ -139,6 +139,66 @@ class ExpenseRepository {
   }
 }
 
+class HabitRepository {
+  Future<Database> get _db => AppDatabase.instance.database;
+
+  Future<List<Habit>> all() async {
+    final rows = await (await _db).query(
+      'habits',
+      orderBy: 'archived ASC, created_at DESC',
+    );
+    return rows.map(Habit.fromMap).toList();
+  }
+
+  Future<List<HabitCheckin>> allCheckins() async {
+    final rows = await (await _db).query(
+      'habit_checkins',
+      orderBy: 'checkin_date DESC, checked_at DESC',
+    );
+    return rows.map(HabitCheckin.fromMap).toList();
+  }
+
+  Future<Habit> insert(Habit habit) async {
+    final id = await (await _db).insert('habits', habit.toMap());
+    return habit.copyWith(id: id);
+  }
+
+  Future<void> update(Habit habit) async {
+    if (habit.id == null) return;
+    await (await _db).update(
+      'habits',
+      habit.toMap(),
+      where: 'id = ?',
+      whereArgs: [habit.id],
+    );
+  }
+
+  Future<HabitCheckin> insertCheckin(HabitCheckin checkin) async {
+    final id = await (await _db).insert('habit_checkins', checkin.toMap());
+    return checkin.copyWith(id: id);
+  }
+
+  Future<void> deleteCheckin(int id) async {
+    await (await _db).delete(
+      'habit_checkins',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<void> deleteHabitWithCheckins(int id) async {
+    final db = await _db;
+    await db.transaction((txn) async {
+      await txn.delete(
+        'habit_checkins',
+        where: 'habit_id = ?',
+        whereArgs: [id],
+      );
+      await txn.delete('habits', where: 'id = ?', whereArgs: [id]);
+    });
+  }
+}
+
 class WeatherRepository {
   Future<Database> get _db => AppDatabase.instance.database;
 

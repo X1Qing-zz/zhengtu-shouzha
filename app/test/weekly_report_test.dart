@@ -164,4 +164,35 @@ void main() {
     expect(report.insights.length, 4);
     expect(report.narrative, contains('安静'));
   });
+
+  test('habit check-ins stay separate from one-off task counts', () {
+    final report = buildWeeklyReport(
+      diaries: const [],
+      tasks: const [],
+      expenses: const [],
+      habitCheckins: [
+        HabitCheckin(
+          habitId: 1,
+          checkinDate: DateTime(2026, 10, 12),
+          checkedAt: DateTime(2026, 10, 12, 20),
+        ),
+        HabitCheckin(
+          habitId: 1,
+          checkinDate: DateTime(2026, 10, 14),
+          checkedAt: DateTime(2026, 10, 14, 20),
+        ),
+        HabitCheckin(
+          habitId: 2,
+          checkinDate: DateTime(2026, 10, 14),
+          checkedAt: DateTime(2026, 10, 14, 21),
+        ),
+      ],
+      anchor: DateTime(2026, 10, 14),
+    );
+    expect(report.taskDone, 0);
+    expect(report.habitCheckins, 3);
+    expect(report.habitCheckinDays, 2);
+    expect(report.activeDays, 2);
+    expect(report.narrative, contains('打卡 3 次'));
+  });
 }
