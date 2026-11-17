@@ -9,7 +9,7 @@
 - 日历把打卡日期并入完成点，并在当天详情展示打卡时间；周报新增打卡天数与次数。
 - SQLite 升级到 v3，新增 `habits` / `habit_checkins`；备份 schema 升级到 v3，旧备份仍可恢复。
 - 版本 0.8.0+17，46 个测试通过。
-- Android release APK 本地构建；本轮先本地验收，未推送 GitHub。
+- Android release APK 已构建；已发布 GitHub Release v0.8.0（含 APK）。
 
 ## 0.7.0 · 2026-11-07
 
@@ -17,7 +17,7 @@
 - 引入 `tyme` 的离线天文节气计算，不再维护逐年节气日期表；今年 11 月 7 日立冬即进入冬季配色。
 - 新增 2025 / 2026 / 2027 年边界测试，覆盖立春、立夏、立秋、立冬的日期差。
 - 版本 0.7.0+16，39 个测试通过。
-- Android release APK 本地构建；本轮先本地验收，未推送 GitHub。
+- Android release APK 已构建；tag v0.7.0 已推送 GitHub。
 
 ## 0.6.1 · 2026-10-27
 
