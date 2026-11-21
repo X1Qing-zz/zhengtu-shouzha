@@ -324,6 +324,9 @@ class HabitCheckin {
   final DateTime checkedAt;
   final String note;
 
+  /// True when the row was recorded after the day it belongs to.
+  bool get isMakeup => dateOnly(checkedAt).isAfter(dateOnly(checkinDate));
+
   HabitCheckin copyWith({
     int? id,
     int? habitId,

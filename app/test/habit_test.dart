@@ -44,6 +44,48 @@ void main() {
     });
   });
 
+  group('habit makeup', () {
+    test('allows past dates on or after the habit start', () {
+      final now = DateTime(2026, 11, 21, 12);
+      final start = DateTime(2026, 11, 1);
+      expect(
+        isHabitMakeupDate(DateTime(2026, 11, 20), startDate: start, now: now),
+        isTrue,
+      );
+      expect(
+        isHabitMakeupDate(DateTime(2026, 11, 1), startDate: start, now: now),
+        isTrue,
+      );
+      expect(
+        isHabitMakeupDate(DateTime(2026, 11, 21), startDate: start, now: now),
+        isFalse,
+      );
+      expect(
+        isHabitMakeupDate(DateTime(2026, 11, 22), startDate: start, now: now),
+        isFalse,
+      );
+      expect(
+        isHabitMakeupDate(DateTime(2026, 10, 31), startDate: start, now: now),
+        isFalse,
+      );
+    });
+
+    test('detects a check-in recorded after its date', () {
+      final normal = HabitCheckin(
+        habitId: 1,
+        checkinDate: DateTime(2026, 11, 20),
+        checkedAt: DateTime(2026, 11, 20, 21),
+      );
+      final makeup = HabitCheckin(
+        habitId: 1,
+        checkinDate: DateTime(2026, 11, 20),
+        checkedAt: DateTime(2026, 11, 21, 9),
+      );
+      expect(normal.isMakeup, isFalse);
+      expect(makeup.isMakeup, isTrue);
+    });
+  });
+
   group('habit stats', () {
     test('counts current streak, best streak and total', () {
       final stats = computeHabitStats(

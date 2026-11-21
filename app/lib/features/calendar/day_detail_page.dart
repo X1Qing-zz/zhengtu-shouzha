@@ -316,8 +316,18 @@ class _DayDetailPageState extends State<DayDetailPage> {
                                 style: AppText.sans(size: 13.5, color: c.ink),
                               ),
                             ),
+                            if (checkins[i].isMakeup) ...[
+                              TagChip(
+                                label: '补签',
+                                color: c.accent,
+                                dense: true,
+                              ),
+                              const SizedBox(width: 8),
+                            ],
                             Text(
-                              timeHm(checkins[i].checkedAt),
+                              checkins[i].isMakeup
+                                  ? '补于 ${timeHm(checkins[i].checkedAt)}'
+                                  : timeHm(checkins[i].checkedAt),
                               style: AppText.sans(size: 9.5, color: c.muted),
                             ),
                           ],

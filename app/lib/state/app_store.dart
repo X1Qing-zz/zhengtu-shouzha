@@ -644,15 +644,24 @@ class AppStore extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<HabitCheckin?> checkInHabit(Habit habit) async {
+  Future<HabitCheckin?> checkInHabit(Habit habit) =>
+      checkInHabitOn(habit, today());
+
+  /// Records [day] for [habit]. Past days are makeup check-ins.
+  Future<HabitCheckin?> checkInHabitOn(Habit habit, DateTime day) async {
     if (habit.id == null) return null;
-    final existing = habitCheckinOn(habit);
-    if (existing != null) return existing;
     final now = DateTime.now();
+    final target = dateOnly(day);
+    if (target.isBefore(dateOnly(habit.startDate)) ||
+        target.isAfter(dateOnly(now))) {
+      return null;
+    }
+    final existing = habitCheckinOn(habit, target);
+    if (existing != null) return existing;
     final saved = await _habitRepo.insertCheckin(
       HabitCheckin(
         habitId: habit.id!,
-        checkinDate: dateOnly(now),
+        checkinDate: target,
         checkedAt: now,
       ),
     );
@@ -661,8 +670,11 @@ class AppStore extends ChangeNotifier {
     return saved;
   }
 
-  Future<void> undoHabitCheckin(Habit habit) async {
-    final existing = habitCheckinOn(habit);
+  Future<void> undoHabitCheckin(Habit habit) =>
+      undoHabitCheckinOn(habit, today());
+
+  Future<void> undoHabitCheckinOn(Habit habit, DateTime day) async {
+    final existing = habitCheckinOn(habit, day);
     if (existing?.id == null) return;
     await _habitRepo.deleteCheckin(existing!.id!);
     _habitCheckins.removeWhere((c) => c.id == existing.id);

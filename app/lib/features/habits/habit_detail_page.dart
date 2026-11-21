@@ -7,6 +7,7 @@ import '../../data/models.dart';
 import '../../state/app_store.dart';
 import '../../widgets/common.dart';
 import 'habit_editor.dart';
+import 'habit_makeup_sheet.dart';
 
 class HabitDetailPage extends StatefulWidget {
   const HabitDetailPage({super.key, required this.habit});
@@ -20,7 +21,7 @@ class HabitDetailPage extends StatefulWidget {
 class _HabitDetailPageState extends State<HabitDetailPage> {
   late Habit habit = widget.habit;
 
-  Future<void> _edit(BuildContext context) async {
+  Future<void> _edit() async {
     await showHabitEditor(context, habit: habit);
     if (!mounted) return;
     final store = context.read<AppStore>();
@@ -51,6 +52,46 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
       action: SnackBarAction(
         label: '撤销',
         onPressed: () => store.undoHabitCheckin(habit),
+      ),
+    );
+  }
+
+  Future<void> _makeup(
+    BuildContext context,
+    AppStore store, {
+    DateTime? initialDate,
+  }) async {
+    final checkedDates = store.habitCheckins
+        .where((checkin) => checkin.habitId == habit.id)
+        .map((checkin) => ymd(checkin.checkinDate))
+        .toSet();
+    final picked = await showHabitMakeupSheet(
+      context,
+      habit: habit,
+      checkedDates: checkedDates,
+      initialDate: initialDate,
+    );
+    if (picked == null || !context.mounted) return;
+    final existing = store.habitCheckinOn(habit, picked);
+    if (existing != null) {
+      showAppSnack(context, '这一天已经打过卡了');
+      return;
+    }
+    final saved = await store.checkInHabitOn(habit, picked);
+    if (!context.mounted) return;
+    if (saved == null) {
+      showAppSnack(context, '这一天不能补签');
+      return;
+    }
+    final stats = store.habitStats(habit);
+    showAppSnack(
+      context,
+      stats.currentStreak > 1
+          ? '已补签 ${dayTitle(picked)}，连续 ${stats.currentStreak} 天'
+          : '已补签 ${dayTitle(picked)}',
+      action: SnackBarAction(
+        label: '撤销',
+        onPressed: () => store.undoHabitCheckinOn(habit, picked),
       ),
     );
   }
@@ -93,7 +134,10 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
     final checkins = store.habitCheckins
         .where((checkin) => checkin.habitId == habit.id)
         .toList()
-      ..sort((a, b) => b.checkedAt.compareTo(a.checkedAt));
+      ..sort((a, b) {
+        final byDate = b.checkinDate.compareTo(a.checkinDate);
+        return byDate != 0 ? byDate : b.checkedAt.compareTo(a.checkedAt);
+      });
     final checkedDates = checkins.map((entry) => ymd(entry.checkinDate)).toSet();
 
     return Scaffold(
@@ -114,7 +158,7 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                 Text('DAILY CHECK-IN', style: AppText.eyebrow(color: c.muted, size: 9)),
                 const Spacer(),
                 IconButton(
-                  onPressed: () => _edit(context),
+                  onPressed: _edit,
                   icon: const Icon(Icons.edit_outlined, size: 19),
                   color: c.inkSoft,
                 ),
@@ -198,7 +242,37 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                 ],
               ),
             ),
-            const SizedBox(height: 26),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '漏掉的日子，可以补回来',
+                    style: AppText.sans(size: 10.5, color: c.muted),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () => _makeup(context, store),
+                  icon: const Icon(Icons.event_repeat_rounded, size: 15),
+                  label: const Text('补签'),
+                  style: TextButton.styleFrom(
+                    foregroundColor: c.ink,
+                    backgroundColor:
+                        c.accentSoft.withValues(alpha: c.isDark ? 0.4 : 0.55),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    shape: StadiumBorder(
+                      side: BorderSide(
+                        color: c.accent.withValues(alpha: 0.2),
+                        width: 0.7,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 22),
             SectionHeading(
               eyebrow: 'Last 30 days',
               title: '最近 30 天',
@@ -213,6 +287,8 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
               child: _ThirtyDayGrid(
                 checkedDates: checkedDates,
                 todayKey: ymd(today()),
+                startDate: dateOnly(habit.startDate),
+                onTapDay: (day) => _makeup(context, store, initialDate: day),
               ),
             ),
             const SizedBox(height: 26),
@@ -247,17 +323,36 @@ class _HabitDetailPageState extends State<HabitDetailPage> {
                             ),
                             const SizedBox(width: 10),
                             Expanded(
-                              child: Text(
-                                fullDateLabel(checkins[i].checkinDate),
-                                style: AppText.sans(size: 12, color: c.inkSoft),
+                              child: Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      fullDateLabel(checkins[i].checkinDate),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: AppText.sans(size: 12, color: c.inkSoft),
+                                    ),
+                                  ),
+                                  if (checkins[i].isMakeup) ...[
+                                    const SizedBox(width: 6),
+                                    TagChip(
+                                      label: '补签',
+                                      color: c.accent,
+                                      dense: true,
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
+                            const SizedBox(width: 8),
                             Text(
-                              timeHm(checkins[i].checkedAt),
+                              checkins[i].isMakeup
+                                  ? '补于 ${timeHm(checkins[i].checkedAt)}'
+                                  : timeHm(checkins[i].checkedAt),
                               style: AppText.sans(
                                 size: 10,
                                 weight: FontWeight.w600,
-                                color: c.muted,
+                                color: checkins[i].isMakeup ? c.accent : c.muted,
                               ),
                             ),
                           ],
@@ -385,10 +480,17 @@ class _CheckinHero extends StatelessWidget {
 }
 
 class _ThirtyDayGrid extends StatelessWidget {
-  const _ThirtyDayGrid({required this.checkedDates, required this.todayKey});
+  const _ThirtyDayGrid({
+    required this.checkedDates,
+    required this.todayKey,
+    required this.startDate,
+    required this.onTapDay,
+  });
 
   final Set<String> checkedDates;
   final String todayKey;
+  final DateTime startDate;
+  final ValueChanged<DateTime> onTapDay;
 
   @override
   Widget build(BuildContext context) {
@@ -410,37 +512,51 @@ class _ThirtyDayGrid extends StatelessWidget {
         final key = ymd(day);
         final checked = checkedDates.contains(key);
         final isToday = key == todayKey;
-        return Container(
-          decoration: BoxDecoration(
-            color: checked
-                ? c.moss.withValues(alpha: c.isDark ? 0.8 : 0.82)
-                : c.sunken.withValues(alpha: c.isDark ? 0.72 : 0.62),
-            borderRadius: BorderRadius.circular(8),
-            border: isToday
-                ? Border.all(color: c.accent, width: 1)
-                : null,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                '${day.day}',
-                style: AppText.sans(
-                  size: 9.5,
-                  weight: FontWeight.w600,
-                  color: checked ? c.surface : c.muted,
+        final canMakeup = !checked &&
+            !isToday &&
+            day.isBefore(today()) &&
+            !day.isBefore(startDate);
+        return GestureDetector(
+          onTap: canMakeup ? () => onTapDay(day) : null,
+          child: Container(
+            decoration: BoxDecoration(
+              color: checked
+                  ? c.moss.withValues(alpha: c.isDark ? 0.8 : 0.82)
+                  : c.sunken.withValues(alpha: c.isDark ? 0.72 : 0.62),
+              borderRadius: BorderRadius.circular(8),
+              border: isToday
+                  ? Border.all(color: c.accent, width: 1)
+                  : null,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '${day.day}',
+                  style: AppText.sans(
+                    size: 9.5,
+                    weight: FontWeight.w600,
+                    color: checked ? c.surface : c.muted,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Container(
-                width: 3,
-                height: 3,
-                decoration: BoxDecoration(
-                  color: checked ? c.surface.withValues(alpha: 0.85) : c.line,
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ],
+                const SizedBox(height: 2),
+                if (canMakeup)
+                  Icon(
+                    Icons.add_rounded,
+                    size: 9,
+                    color: c.muted.withValues(alpha: 0.65),
+                  )
+                else
+                  Container(
+                    width: 3,
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: checked ? c.surface.withValues(alpha: 0.85) : c.line,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+              ],
+            ),
           ),
         );
       },

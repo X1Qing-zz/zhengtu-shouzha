@@ -1,6 +1,17 @@
 import '../core/date_utils.dart';
 import 'models.dart';
 
+/// A makeup day must be in the past and not before the habit started.
+bool isHabitMakeupDate(
+  DateTime day, {
+  required DateTime startDate,
+  DateTime? now,
+}) {
+  final target = dateOnly(day);
+  final base = dateOnly(now ?? DateTime.now());
+  return target.isBefore(base) && !target.isBefore(dateOnly(startDate));
+}
+
 class HabitStats {
   const HabitStats({
     required this.currentStreak,
